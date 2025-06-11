@@ -1,6 +1,10 @@
 // popup.js - Handles the popup UI and user interactions
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialize filter variables globally at the top
+  let filterValue = '';
+  let filterField = 'label';
+  
   // Tab handling
   const tabs = document.querySelectorAll(".tab");
   const tabContents = document.querySelectorAll(".tab-content");
@@ -241,20 +245,22 @@ document.addEventListener("DOMContentLoaded", () => {
         urlPattern: urlPattern,
         valueSource: valueSource,
         active: true
-      });
-
-      // Save to storage
+      });        // Save to storage
       chrome.storage.local.set({ customHeaders: headers }, () => {
-        // Display the new header
-        displayHeader({
-          id,
-          label: headerLabel,
-          name: headerName,
-          value: headerValue,
-          urlPattern: urlPattern,
-          valueSource: valueSource,
-          active: true
-        });
+        // Display the new header with respect to filtering
+        if (filterValue) {
+          renderFilteredHeaders();
+        } else {
+          displayHeader({
+            id,
+            label: headerLabel,
+            name: headerName,
+            value: headerValue,
+            urlPattern: urlPattern,
+            valueSource: valueSource,
+            active: true
+          });
+        }
 
         // Update the rules
         updateRules(headers);
@@ -293,16 +299,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Save to storage
       chrome.storage.local.set({ customHeaders: headers }, () => {
-        // Display the new header
-        displayHeader({ 
-          id, 
-          label, 
-          name, 
-          value, 
-          urlPattern, 
-          valueSource,
-          active: true 
-        });
+        // If filtering is active, re-render the filtered list
+        if (filterValue) {
+          renderFilteredHeaders();
+        } else {
+          // Otherwise just display the new header
+          displayHeader({ 
+            id, 
+            label, 
+            name, 
+            value, 
+            urlPattern, 
+            valueSource,
+            active: true 
+          });
+        }
 
         // Update the rules
         updateRules(headers);
@@ -330,8 +341,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // === Header Filtering ===
   const headerFilterInput = document.getElementById('header-filter-input');
   const headerFilterRadios = document.getElementsByName('header-filter-criteria');
-  let filterValue = '';
-  let filterField = 'label';
 
   headerFilterInput.addEventListener('input', () => {
     filterValue = headerFilterInput.value.trim().toLowerCase();
@@ -525,9 +534,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Save to storage
       chrome.storage.local.set({ customHeaders: updatedHeaders }, () => {
-        // Refresh the list
+        // Refresh the list with filtering if active
         headerList.innerHTML = "";
-        updatedHeaders.forEach(displayHeader);
+        if (filterValue) {
+          renderFilteredHeaders();
+        } else {
+          updatedHeaders.forEach(displayHeader);
+        }
 
         // Update the rules
         updateRules(updatedHeaders);
@@ -549,8 +562,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Update storage
       chrome.storage.local.set({ customHeaders: updatedHeaders }, () => {
-        // Remove from UI
-        document.querySelector(`.header-item[data-id="${id}"]`).remove();
+        // Either remove the item from UI or rerender the filtered list
+        if (filterValue) {
+          // If filtering is active, re-render the entire filtered list
+          renderFilteredHeaders();
+        } else {
+          // If no filtering, just remove the deleted item from DOM
+          document.querySelector(`.header-item[data-id="${id}"]`).remove();
+        }
 
         // Update the rules
         updateRules(updatedHeaders);
@@ -867,12 +886,20 @@ document.addEventListener("DOMContentLoaded", () => {
       
       // Save to storage
       chrome.storage.local.set({ customHeaders: updatedHeaders }, () => {
-        // Update the UI
-        const headerItem = document.querySelector(`.header-item[data-id="${id}"]`);
-        if (isActive) {
-          headerItem.classList.remove('header-disabled');
+        // Update the UI based on whether filtering is active
+        if (filterValue) {
+          // If filtering is active, re-render the entire filtered list
+          renderFilteredHeaders();
         } else {
-          headerItem.classList.add('header-disabled');
+          // If no filtering, just update the class on the specific item
+          const headerItem = document.querySelector(`.header-item[data-id="${id}"]`);
+          if (headerItem) {
+            if (isActive) {
+              headerItem.classList.remove('header-disabled');
+            } else {
+              headerItem.classList.add('header-disabled');
+            }
+          }
         }
         
         // Update the rules (only include active headers)
@@ -960,7 +987,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const json = event.target.result;
       chrome.runtime.sendMessage({ action: 'importCustomHeaders', json }, (response) => {
         if (response && response.success) {
-          loadHeaders();
+          // Respect filtering when loading headers after import
+          if (filterValue) {
+            renderFilteredHeaders();
+          } else {
+            loadHeaders();
+          }
           alert('Headers imported successfully!');
         } else {
           alert('Import failed: ' + (response && response.error ? response.error : 'Unknown error'));
@@ -999,7 +1031,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const importedWithIds = imported.map((h, i) => ({ ...h, id: (now + i).toString() }));
         const merged = existing.concat(importedWithIds);
         chrome.storage.local.set({ customHeaders: merged }, () => {
-          loadHeaders();
+          // Respect filtering when loading headers after import
+          if (filterValue) {
+            renderFilteredHeaders();
+          } else {
+            loadHeaders();
+          }
           alert('Headers imported and added successfully!');
         });
       });
