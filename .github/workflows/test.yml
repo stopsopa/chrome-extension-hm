@@ -1,0 +1,37 @@
+name: Run Tests
+
+on:
+  push: # Run on all pushes to any branch
+  pull_request: # Run on all pull requests
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  test:
+    # Use ARM64 architecture runners instead of X64
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+
+
+    # - name: Check out repository code
+    #   run: |
+    #     # Clean any existing files in the workspace
+    #     if [ -d "$GITHUB_WORKSPACE" ]; then
+    #       rm -rf "$GITHUB_WORKSPACE"/*
+    #     fi
+        
+    #     # Clone the repository into the workspace
+    #     git clone https://github.com/$GITHUB_REPOSITORY.git $GITHUB_WORKSPACE
+    #     cd $GITHUB_WORKSPACE
+    #     git checkout $GITHUB_SHA
+    
+    # - name: Use Node.js 22
+    #   uses: actions/setup-node@v3
+    #   with:
+    #     node-version: 22
+    #     cache: 'npm'
+      
+    - name: Run tests
+      run: npm test
+      
