@@ -327,6 +327,70 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // === Header Filtering ===
+  const headerFilterInput = document.getElementById('header-filter-input');
+  const headerFilterRadios = document.getElementsByName('header-filter-criteria');
+  let filterValue = '';
+  let filterField = 'label';
+
+  headerFilterInput.addEventListener('input', () => {
+    filterValue = headerFilterInput.value.trim().toLowerCase();
+    renderFilteredHeaders();
+  });
+
+  headerFilterRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.checked) {
+        filterField = radio.value;
+        renderFilteredHeaders();
+      }
+    });
+  });
+
+  function renderFilteredHeaders() {
+    chrome.storage.local.get('customHeaders', (data) => {
+      const headers = data.customHeaders || [];
+      let filtered = headers;
+      if (filterValue) {
+        filtered = headers.filter(h => {
+          const val = (h[filterField] || '').toLowerCase();
+          return val.includes(filterValue);
+        });
+      }
+      headerList.innerHTML = '';
+      if (filtered.length === 0) {
+        // Show a nice notification if nothing matches
+        const criteriaLabel = {
+          label: 'label',
+          name: 'name',
+          value: 'value',
+          urlPattern: 'URL pattern'
+        }[filterField] || filterField;
+        const note = document.createElement('div');
+        note.style.padding = '24px 8px';
+        note.style.textAlign = 'center';
+        note.style.color = '#888';
+        note.style.background = '#f8f8f8';
+        note.style.borderRadius = '6px';
+        note.style.fontSize = '15px';
+        note.innerHTML = `Nothing found when filtering with <b>${criteriaLabel}</b> including <b>${escapeHtml(filterValue)}</b>.`;
+        headerList.appendChild(note);
+        return;
+      }
+      filtered.forEach(displayHeader);
+    });
+  }
+
+  // Patch loadHeaders to use filtering if filter is active
+  const origLoadHeaders = loadHeaders;
+  loadHeaders = function() {
+    if (filterValue) {
+      renderFilteredHeaders();
+    } else {
+      origLoadHeaders();
+    }
+  };
+
   function displayHeader(header) {
     const headerItem = document.createElement("div");
     headerItem.className = "header-item";
@@ -344,13 +408,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let valueDisplay;
     if (header.valueSource === "dictionary") {
-      valueDisplay = `<div class="header-value">Value (from dictionary): <span class="dict-reference">${escapeHtml(
+      valueDisplay = `<div class="header-value">From dictionary: <span class="dict-reference">${escapeHtml(
         header.value
-      )}</span> <span class="dynamic-indicator" title="The actual value is always pulled dynamically from the dictionary">↻</span></div>`;
+      )}</span></div>`;
     } else {
-      valueDisplay = `<div class="header-value">${escapeHtml(
+      valueDisplay = `<div class="header-value">Plane value: <span class="dict-reference">${escapeHtml(
         header.value
-      )}</div>`;
+      )}</span></div>`;
     }
 
     headerItem.innerHTML = `
@@ -360,7 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ${labelDisplay}
       <div class="header-name">${escapeHtml(header.name)}</div>
       ${valueDisplay}
-      <div class="url-pattern">URL pattern (wildcard): ${escapeHtml(
+      <div class="url-pattern"><b>Pattern:</b> ${escapeHtml(
         header.urlPattern
       )}</div>
     `;
@@ -856,6 +920,91 @@ document.addEventListener("DOMContentLoaded", () => {
         enabled: enabled 
       });
     });
+  });
+
+  // === Export/Import Custom Headers ===
+  const exportBtn = document.getElementById('export-headers-btn');
+  const importBtn = document.getElementById('import-headers-btn');
+  const importFile = document.getElementById('import-headers-file');
+  const importAddBtn = document.getElementById('import-headers-add-btn');
+  const importAddFile = document.getElementById('import-headers-add-file');
+
+  exportBtn.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'exportCustomHeaders' }, (response) => {
+      if (response && response.json) {
+        const blob = new Blob([response.json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'customHeaders.json';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+      }
+    });
+  });
+
+  importBtn.addEventListener('click', () => {
+    importFile.value = '';
+    importFile.click();
+  });
+
+  importFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const json = event.target.result;
+      chrome.runtime.sendMessage({ action: 'importCustomHeaders', json }, (response) => {
+        if (response && response.success) {
+          loadHeaders();
+          alert('Headers imported successfully!');
+        } else {
+          alert('Import failed: ' + (response && response.error ? response.error : 'Unknown error'));
+        }
+      });
+    };
+    reader.readAsText(file);
+  });
+
+  importAddBtn.addEventListener('click', () => {
+    importAddFile.value = '';
+    importAddFile.click();
+  });
+
+  importAddFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      let imported = [];
+      try {
+        imported = JSON.parse(event.target.result);
+      } catch (err) {
+        alert('Import failed: Invalid JSON');
+        return;
+      }
+      if (!Array.isArray(imported)) {
+        alert('Import failed: JSON must be an array');
+        return;
+      }
+      // Add to existing headers
+      chrome.storage.local.get('customHeaders', (data) => {
+        const existing = data.customHeaders || [];
+        // Avoid duplicate IDs, generate new ones for imported
+        const now = Date.now();
+        const importedWithIds = imported.map((h, i) => ({ ...h, id: (now + i).toString() }));
+        const merged = existing.concat(importedWithIds);
+        chrome.storage.local.set({ customHeaders: merged }, () => {
+          loadHeaders();
+          alert('Headers imported and added successfully!');
+        });
+      });
+    };
+    reader.readAsText(file);
   });
 
   // Helper function to escape HTML

@@ -118,6 +118,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     // Keep the message channel open for the async response
     return true;
+  } else if (message.action === "exportCustomHeaders") {
+    // Export customHeaders as JSON, sorted by label
+    chrome.storage.local.get(["customHeaders"], (data) => {
+      let headers = data.customHeaders || [];
+      headers = headers.slice().sort((a, b) => {
+        const labelA = (a.label || '').toLowerCase();
+        const labelB = (b.label || '').toLowerCase();
+        if (labelA < labelB) return -1;
+        if (labelA > labelB) return 1;
+        return 0;
+      });
+      sendResponse({
+        json: JSON.stringify(headers, null, 2)
+      });
+    });
+    return true;
+  } else if (message.action === "importCustomHeaders") {
+    // Import customHeaders from provided JSON string
+    try {
+      const imported = JSON.parse(message.json);
+      if (Array.isArray(imported)) {
+        chrome.storage.local.set({ customHeaders: imported }, () => {
+          updateRules(imported);
+          sendResponse({ success: true });
+        });
+      } else {
+        sendResponse({ success: false, error: "Invalid format" });
+      }
+    } catch (e) {
+      sendResponse({ success: false, error: e.message });
+    }
+    return true;
   }
 });
 
