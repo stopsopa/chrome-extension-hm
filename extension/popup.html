@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Custom Headers Extension</title>
+    <link rel="icon" href="images/icon128.png" type="image/png" />
+    <style>
+      body {
+        width: 400px;
+        padding: 10px;
+        font-family: Arial, sans-serif;
+      }
+      h2 {
+        margin-top: 0;
+        color: #4285f4;
+      }
+      h4 {
+        margin-top: 4px;
+        margin-bottom: 4px;
+      }
+      #dictionary-form,
+      #header-form {
+        margin-bottom: 15px;
+        padding: 7px;
+        border: 1px solid rgb(198, 198, 198);
+      }
+      .form-group {
+        margin-bottom: 7px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+      }
+      /* Global extension toggle styles */
+      .global-toggle {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #f8f8f8;
+        border-radius: 4px;
+        border: 1px solid #eaeaea;
+        margin-bottom: 4px;
+      }
+      .toggle-label {
+        margin-left: 10px;
+        font-weight: bold;
+      }
+      /* Tab styles */
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid #ccc;
+        margin-bottom: 15px;
+      }
+      .tab {
+        padding: 8px 15px;
+        cursor: pointer;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        border-bottom: none;
+        margin-right: 5px;
+        border-radius: 4px 4px 0 0;
+      }
+      .tab.active {
+        background-color: #4285f4;
+        color: white;
+        border-color: #4285f4;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      input[type="text"],
+      select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #4285f4;
+        color: white;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #3367d6;
+      }
+      .cancel-edit-btn {
+        background-color: #999;
+        margin-left: 10px;
+        display: none;
+      }
+      .cancel-edit-btn:hover {
+        background-color: #777;
+      }
+      .header-list,
+      .dictionary-list {
+        max-height: 350px;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        padding: 5px;
+      }
+      .header-item,
+      .dictionary-item {
+        margin-bottom: 8px;
+        padding: 8px;
+        border-radius: 4px;
+        background-color: #f0f0f0;
+        position: relative;
+      }
+      .header-checkbox {
+        position: absolute;
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+        right: 54px;
+        top: 3px;
+      }
+      .header-disabled {
+        opacity: 0.5;
+      }
+      .delete-btn {
+        position: absolute;
+        right: 5px;
+        top: 5px;
+        background: #ff4c4c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 10px;
+        padding: 2px 5px;
+      }
+      .delete-confirmation {
+        background-color: #f0f0f0;
+        position: absolute;
+        right: 5px;
+        top: 5px;
+        display: flex;
+        gap: 5px;
+      }
+      .cancel-btn {
+        background-color: #999;
+        font-size: 13px;
+        padding: 2px 5px;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .proceed-btn {
+        background-color: #ff0000;
+        font-size: 13px;
+        padding: 2px 5px;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .edit-btn {
+        position: absolute;
+        right: 30px;
+        top: 5px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 10px;
+        padding: 2px 5px;
+      }
+      /* Removed as we now use header-name-display instead
+      .header-name {
+        font-weight: bold;
+        color: #333;
+        position: absolute;
+        top: 9px;
+        left: 50%;
+        font-size: 10px;
+      } */
+      .header-label {
+        font-weight: bold;
+        color: #4285f4;
+        font-size: 14px;
+        margin-bottom: 5px;
+      }
+      .header-value,
+      .url-pattern,
+      .header-name-display {
+        color: #0d6efd;
+        font-style: italic;
+        font-size: 12px;
+        margin-top: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        display: block;
+      }
+      .dict-key {
+        font-weight: bold;
+        color: #333;
+      }
+      .dict-value {
+        color: #0d6efd;
+        font-style: italic;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        display: block;
+        margin-top: 6px;
+      }
+      .value-source-group {
+        display: flex;
+        align-items: center;
+      }
+      .radio-label {
+        display: inline-flex;
+        align-items: center;
+        margin-right: 15px;
+        font-weight: normal;
+        cursor: pointer;
+      }
+      .radio-label input {
+        margin-right: 5px;
+      }
+      .dynamic-indicator {
+        color: #ff9800;
+        font-weight: bold;
+        cursor: help;
+      }
+      .toggle-label {
+        margin-left: 10px;
+        font-weight: bold;
+      }
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+      }
+      input:checked + .slider {
+        background-color: #2196f3;
+      }
+      input:focus + .slider {
+        box-shadow: 0 0 1px #2196f3;
+      }
+      input:checked + .slider:before {
+        transform: translateX(26px);
+      }
+      .slider.round {
+        border-radius: 34px;
+      }
+      .slider.round:before {
+        border-radius: 50%;
+      }
+      .tooltip {
+        position: relative;
+        display: inline-block;
+      }
+      .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 180px;
+        background-color: #222;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 7px 10px;
+        position: absolute;
+        z-index: 10;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: opacity 0.15s;
+        font-size: 13px;
+        pointer-events: none;
+      }
+      .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+      }
+      .tooltip .tooltiptext::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 7px;
+        border-style: solid;
+        border-color: #222 transparent transparent transparent;
+      }
+
+      /* Add styles for multiple headers UI */
+      .header-entry {
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        position: relative;
+      }
+
+      .header-entries-container {
+        margin-top: 10px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .remove-header-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: #ff4c4c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 10px;
+        padding: 2px 5px;
+      }
+
+      .add-header-btn {
+        background-color: #4caf50;
+        /* margin-top: 10px; */
+      }
+
+      .header-item .header-detail {
+        color: #0d6efd;
+        font-style: italic;
+        font-size: 12px;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
+
+      .header-item .headers-list {
+        /* margin-top: 10px; */
+        margin-left: 10px;
+      }
+
+      .header-item .header-entry-display {
+        /* margin-bottom: 5px; */
+        /* padding: 3px 0; */
+        border-bottom: 1px dotted #eee;
+      }
+
+      /* Adjust existing styling for the new structure */
+      .value-source-dictionary,
+      .value-source-manual {
+        margin-top: 5px;
+      }
+
+      /* Style for URL pattern input field */
+      .url-pattern-input {
+        background-color: transparent;
+        border: none;
+        color: #0d6efd;
+        font-style: italic;
+        font-size: 12px;
+        width: calc(100% - 60px);
+        cursor: pointer;
+        margin-left: 5px;
+        padding: 0 !important;
+        font-family: inherit;
+      }
+
+      .url-pattern-input:focus {
+        outline: 1px dotted #4285f4;
+        background-color: #f8f9fa;
+      }
+
+      .url-pattern-input::selection {
+        background-color: #4285f4;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Global Extension Toggle - Moved above tabs -->
+    <div class="global-toggle">
+      <label class="switch">
+        <input type="checkbox" id="extension-toggle" checked />
+        <span class="slider round"></span>
+      </label>
+      <span class="toggle-label">Extension Enabled</span>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <div class="tab active" data-tab="headers">Custom Headers</div>
+      <div class="tab" data-tab="dictionary">Values Dictionary</div>
+    </div>
+
+    <!-- Headers Tab Content -->
+    <div id="headers-tab" class="tab-content active">
+      <form id="header-form">
+        <div class="form-group">
+          <label for="header-label">Rule Label:</label>
+          <input type="text" id="header-label" placeholder="My Custom Rule" required />
+        </div>
+
+        <div class="form-group">
+          <label for="url-pattern"
+            >URL Pattern (wildcard):
+            <span class="tooltip">
+              <a
+                href="https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest#url_filter_syntax"
+                target="_blank"
+              >
+                <span style="font-size: 12px; color: #4285f4; text-decoration: underline">?</span>
+              </a>
+              <span class="tooltiptext">Learn about URL filter syntax</span>
+            </span>
+          </label>
+          <input
+            type="text"
+            id="url-pattern"
+            placeholder="https://*.example.com/*"
+            title="Use * as wildcard (not regex)"
+            required
+          />
+        </div>
+
+        <h4>Headers</h4>
+        <div id="header-entries-container" class="header-entries-container">
+          <!-- Header entries will be added here dynamically -->
+          <div class="header-entry" data-index="0">
+            <button type="button" class="remove-header-btn" title="Remove this header">&#9851;&#65039;</button>
+
+            <div class="form-group">
+              <label for="header-name-0">Header Name:</label>
+              <input type="text" id="header-name-0" class="header-name" placeholder="X-Custom-Header" required />
+            </div>
+
+            <div class="form-group value-source-group">
+              <label style="display: inline-block; margin-right: 10px">Value Source:</label>
+              <label class="radio-label">
+                <input type="radio" name="value-source-0" value="manual" class="value-source" checked /> Manual
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="value-source-0" value="dictionary" class="value-source" /> Dictionary
+              </label>
+            </div>
+
+            <div class="form-group value-source-manual">
+              <label for="header-value-0">Header Value:</label>
+              <input type="text" id="header-value-0" class="header-value" placeholder="CustomValue" required />
+            </div>
+
+            <div class="form-group value-source-dictionary" style="display: none">
+              <label for="header-value-key-0">Select Value:</label>
+              <select id="header-value-key-0" class="header-value-key">
+                <option value="">-- Select from dictionary --</option>
+              </select>
+            </div>
+
+            <div class="form-group header-first-group">
+              <label class="checkbox-label">
+                <input type="checkbox" class="header-first-checkbox" checked /> Initial HTML Request
+                <span class="tooltip">
+                  <span style="font-size: 12px; color: #4285f4; text-decoration: underline">?</span>
+                  <span class="tooltiptext"
+                    >When checked, this header will be sent also to the first request for html</span
+                  >
+                </span>
+              </label>
+            </div>
+
+            <div class="form-group header-regex-group" style="display: none">
+              <label for="header-regex-0">
+                URL Regex Filter:
+                <span class="tooltip">
+                  <span style="font-size: 12px; color: #4285f4; text-decoration: underline">?</span>
+                  <span class="tooltiptext"
+                    >If above tickbox is off it means this header will be added only to ajax and fetch requests. but
+                    only when matches this regex</span
+                  >
+                </span>
+                <input
+                  type="text"
+                  id="header-regex-0"
+                  class="header-regex"
+                  value="/^(?!.*\/swagger-config)(?!.*\/v3\/api-docs).*$/"
+                  placeholder="/^(?!.*\/swagger-config)(?!.*\/v3\/api-docs).*$/"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <span class="tooltip" style="float: right">
+          <button type="button" id="add-header-btn" class="add-header-btn">+</button>
+          <span class="tooltiptext">Add another header</span>
+        </span>
+
+        <button type="submit">Add Rule</button>
+      </form>
+
+      <!-- Filter inputs and criteria for headers -->
+      <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px">
+        <div style="position: relative; width: 100%">
+          <input
+            type="search"
+            id="header-filter-input"
+            placeholder="Filter headers..."
+            style="width: 100%; padding: 6px; padding-right: 24px; border-radius: 4px; border: 1px solid #ccc"
+          />
+          <button
+            id="clear-filter-btn"
+            style="
+              position: absolute;
+              right: 6px;
+              top: 50%;
+              transform: translateY(-50%);
+              background: none;
+              border: none;
+              color: #999;
+              padding: 0;
+              font-size: 14px;
+              cursor: pointer;
+              display: none;
+            "
+          >
+            x
+          </button>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center">
+          <label><input type="radio" name="header-filter-criteria" value="label" checked /> Label</label>
+          <label><input type="radio" name="header-filter-criteria" value="name" /> Header</label>
+          <label><input type="radio" name="header-filter-criteria" value="value" /> Value</label>
+          <label><input type="radio" name="header-filter-criteria" value="urlPattern" /> URL Pattern</label>
+        </div>
+      </div>
+
+      <div class="header-list" id="header-list">
+        <!-- Header items will be added here dynamically -->
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 15px">
+        <button type="button" id="export-headers-btn">Export</button>
+        <span class="tooltip">
+          <button type="button" id="clear-headers-btn">Clear</button>
+          <span class="tooltiptext">Remove all elements from the list</span>
+        </span>
+        <span class="tooltip">
+          <button type="button" id="import-headers-add-btn">Import</button>
+          <span class="tooltiptext">Import headers and add to the existing list</span>
+        </span>
+        <input type="file" id="import-headers-add-file" accept="application/json" style="display: none" />
+      </div>
+    </div>
+
+    <!-- Dictionary Tab Content -->
+    <div id="dictionary-tab" class="tab-content">
+      <form id="dictionary-form">
+        <div class="form-group">
+          <label for="dict-key">Key Name:</label>
+          <input type="text" id="dict-key" placeholder="dev-token" required />
+        </div>
+
+        <div class="form-group">
+          <label for="dict-value">Header Value:</label>
+          <input type="text" id="dict-value" placeholder="value-for-dev-environment" required />
+        </div>
+
+        <button type="submit">Add Dictionary Entry</button>
+      </form>
+
+      <div class="dictionary-list" id="dictionary-list">
+        <!-- Dictionary items will be added here dynamically -->
+      </div>
+    </div>
+
+    <p style="margin-top: 15px; font-size: 12px; color: #666">
+      Note: Changes will apply after you reload the affected pages.
+    </p>
+
+    <script type="module" src="popup.js"></script>
+    <script type="module" src="tooltip.js"></script>
+  </body>
+</html>
