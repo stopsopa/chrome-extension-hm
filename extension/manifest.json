@@ -36,11 +36,11 @@
   
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "images/icon128.png",
+    "default_icon": "icons/icon128.png",
     "default_title": "Request Header Modifier"
   },
   
   "icons": {
-    "128": "images/icon128.png"
+    "128": "icons/icon128.png"
   }
 }

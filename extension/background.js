@@ -253,7 +253,7 @@ function clearAllRules() {
 // Update extension icon based on enabled state
 function updateExtensionIcon(enabled) {
   const iconPath = enabled
-    ? "images/icon128.png" // Normal icon when enabled
+    ? "icons/icon128.png" // Normal icon when enabled
     : "images/icon128_disabled.png"; // Grayscale icon when disabled
 
   chrome.action.setIcon({ path: iconPath });

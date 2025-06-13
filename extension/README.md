@@ -7,7 +7,7 @@ This Chrome extension allows users to add custom HTTP headers to outgoing reques
 The extension includes an SVG source file (`images/icon.svg`) and placeholder PNG files in various sizes required by Chrome:
 - 16x16 pixels (`images/icon16.png`)
 - 48x48 pixels (`images/icon48.png`)
-- 128x128 pixels (`images/icon128.png`)
+- 128x128 pixels (`icons/icon128.png`)
 
 ### Converting SVG to PNG
 
