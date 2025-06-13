@@ -48,8 +48,13 @@ if [ -f "manifest.json" ]; then
 fi
 
 # Create zip file with the current date and version if available
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-ZIP_NAME="extension${VERSION}_${TIMESTAMP}.zip"
+
+ZIP_NAME="extension${VERSION}.zip"
+
+if [ -f "${ZIP_NAME}" ]; then
+  echo "Removing existing zip file: ${ZIP_NAME}"
+  rm -f "${ZIP_NAME}"
+fi
 
 echo "Creating zip file: ${ZIP_NAME}"
 echo "Excluding: zip.sh, extension*.zip, and .DS_Store files"
