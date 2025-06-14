@@ -11,9 +11,6 @@ This extension uses the declarativeNetRequest permission to modify HTTP headers 
 ### Host Permission
 Host permissions for "<all_urls>" are required to modify headers for any website the user visits, ensuring the header modification functionality works across all domains without restrictions. This is essential for the core functionality as users may need to add custom headers for any website.
 
-### Remote Code
-Remote code is not intentionally used in this extension. If the Chrome Web Store flagged this, it might be related to how the extension loads and applies rules dynamically from storage. No external scripts are loaded from remote servers.
-
 ### Storage
 Storage permission is needed to save user preferences, custom header configurations, and rule sets between browser sessions. This allows users to maintain their header modification settings after closing and reopening the browser.
 
