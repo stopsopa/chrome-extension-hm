@@ -1,7 +1,7 @@
 # Privacy Justifications for Chrome Extension
 
 ## Single Purpose Description
-This extension modifies HTTP request headers to enhance web interactions by adding custom headers to all outgoing web requests.
+Header Modifier is a powerful browser extension that allows you to customize HTTP request headers for all your web interactions. Whether you're a developer testing APIs, need to add authentication headers, or want to modify browser fingerprints, this tool gives you complete control over outgoing HTTP headers.
 
 ## Permissions Justifications
 
@@ -20,22 +20,9 @@ Storage permission is needed to save user preferences, custom header configurati
 ## Data Usage Compliance
 This extension complies with all Chrome Web Store Developer Program Policies regarding data collection and usage. User data is processed locally within the browser and is not transmitted to any external servers. The extension only modifies outgoing request headers based on user-defined rules and does not collect, store, or share any browsing data or personal information.
 
-## Publication Checklist
-- [x] Existing icon128.png in the extension/images folder is already set up
-- [ ] Add at least one screenshot to the Chrome Web Store listing
-- [ ] Select a category for your extension (suggested: "Productivity" or "Developer Tools")
-- [ ] Select a language
-- [ ] Write a detailed description (suggested below)
-- [ ] Provide contact email and verify it
-- [ ] Fill in privacy practices tab with justifications from this document
-- [ ] Certify data usage compliance
-
-## Suggested Detailed Description
-Header Modifier is a powerful browser extension that allows you to customize HTTP request headers for all your web interactions. Whether you're a developer testing APIs, need to add authentication headers, or want to modify browser fingerprints, this tool gives you complete control over outgoing HTTP headers.
 
 Key features:
-- Add, modify, or remove HTTP headers in outgoing requests
+- Add or modify HTTP headers in outgoing requests
 - Apply headers globally or to specific URLs using pattern matching
-- Save multiple header configurations for different scenarios
 - User-friendly interface with real-time header management
 - No data collection - all operations happen locally in your browser
