@@ -271,14 +271,14 @@ function updateExtensionIcon(enabled) {
 // 2. Convert it to grayscale and reduce opacity to about 50-60%
 // 3. Save it as icon128_disabled.png in the images folder
 
-// log what url will be modified
-chrome.webRequest.onBeforeSendHeaders.addListener(
-  (details) => {
-    console.log(`===== URL: ${details.method} ${details.url}`);
+// // log what url will be modified
+// chrome.webRequest.onBeforeSendHeaders.addListener(
+//   (details) => {
+//     console.log(`===== URL: ${details.method} ${details.url}`);
 
-    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/BlockingResponse
-    return {};
-  },
-  { urls: ["<all_urls>"] },
-  ["requestHeaders"]
-);
+//     // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/BlockingResponse
+//     return {};
+//   },
+//   { urls: ["<all_urls>"] },
+//   ["requestHeaders"]
+// );

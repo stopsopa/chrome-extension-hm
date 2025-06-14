@@ -6,7 +6,7 @@ This extension modifies HTTP request headers to enhance web interactions by addi
 ## Permissions Justifications
 
 ### declarativeNetRequest
-This extension uses declarativeNetRequest to efficiently modify HTTP headers in outgoing requests without accessing or exposing sensitive user data. This permission allows the extension to add, modify, or remove HTTP headers based on configurable rules.
+This extension uses the declarativeNetRequest permission to modify HTTP headers in outgoing requests. This permission is essential for the core functionality of the extension, which is to add or modify HTTP headers based on user-defined rules. The declarativeNetRequest API allows the extension to perform these modifications efficiently without accessing or exposing sensitive user data, as it operates at the network request level rather than accessing page content.
 
 ### Host Permission
 Host permissions for "<all_urls>" are required to modify headers for any website the user visits, ensuring the header modification functionality works across all domains without restrictions. This is essential for the core functionality as users may need to add custom headers for any website.
@@ -16,9 +16,6 @@ Remote code is not intentionally used in this extension. If the Chrome Web Store
 
 ### Storage
 Storage permission is needed to save user preferences, custom header configurations, and rule sets between browser sessions. This allows users to maintain their header modification settings after closing and reopening the browser.
-
-### webRequest
-The webRequest permission allows the extension to monitor network requests for debugging purposes and to properly apply the header modifications. This is necessary to ensure headers are correctly applied to the appropriate requests based on user-defined patterns.
 
 ## Data Usage Compliance
 This extension complies with all Chrome Web Store Developer Program Policies regarding data collection and usage. User data is processed locally within the browser and is not transmitted to any external servers. The extension only modifies outgoing request headers based on user-defined rules and does not collect, store, or share any browsing data or personal information.
