@@ -5,6 +5,24 @@ document.addEventListener("DOMContentLoaded", () => {
   let filterValue = '';
   let filterField = 'label';
   
+  // Load saved filter state
+  chrome.storage.local.get(['headerFilterValue', 'headerFilterField'], (data) => {
+    if (data.headerFilterValue) {
+      filterValue = data.headerFilterValue;
+      document.getElementById('header-filter-input').value = filterValue;
+    }
+    
+    if (data.headerFilterField) {
+      filterField = data.headerFilterField;
+      document.querySelector(`input[name="header-filter-criteria"][value="${filterField}"]`).checked = true;
+    }
+    
+    // If we have a saved filter, apply it immediately
+    if (filterValue) {
+      renderFilteredHeaders();
+    }
+  });
+  
   // Tab handling
   const tabs = document.querySelectorAll(".tab");
   const tabContents = document.querySelectorAll(".tab-content");
@@ -338,9 +356,32 @@ document.addEventListener("DOMContentLoaded", () => {
   // === Header Filtering ===
   const headerFilterInput = document.getElementById('header-filter-input');
   const headerFilterRadios = document.getElementsByName('header-filter-criteria');
+  const clearFilterBtn = document.getElementById('clear-filter-btn');
+
+  // Show/hide clear button based on input value
+  function updateClearButtonVisibility() {
+    clearFilterBtn.style.display = headerFilterInput.value ? 'block' : 'none';
+  }
+
+  // Update clear button on initial load
+  if (headerFilterInput.value) {
+    updateClearButtonVisibility();
+  }
 
   headerFilterInput.addEventListener('input', () => {
     filterValue = headerFilterInput.value.trim().toLowerCase();
+    // Save filter value to storage
+    chrome.storage.local.set({ headerFilterValue: filterValue });
+    updateClearButtonVisibility();
+    renderFilteredHeaders();
+  });
+
+  // Clear filter when clear button is clicked
+  clearFilterBtn.addEventListener('click', () => {
+    headerFilterInput.value = '';
+    filterValue = '';
+    chrome.storage.local.set({ headerFilterValue: '' });
+    updateClearButtonVisibility();
     renderFilteredHeaders();
   });
 
@@ -348,6 +389,8 @@ document.addEventListener("DOMContentLoaded", () => {
     radio.addEventListener('change', () => {
       if (radio.checked) {
         filterField = radio.value;
+        // Save filter field to storage
+        chrome.storage.local.set({ headerFilterField: filterField });
         renderFilteredHeaders();
       }
     });
@@ -386,6 +429,15 @@ document.addEventListener("DOMContentLoaded", () => {
       filtered.forEach(displayHeader);
     });
   }
+
+  // Clear filter when input is cleared
+  headerFilterInput.addEventListener('search', () => {
+    if (!headerFilterInput.value.trim()) {
+      filterValue = '';
+      chrome.storage.local.set({ headerFilterValue: '' });
+      renderFilteredHeaders();
+    }
+  });
 
   // Patch loadHeaders to use filtering if filter is active
   const origLoadHeaders = loadHeaders;
