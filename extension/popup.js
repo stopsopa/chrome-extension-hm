@@ -441,18 +441,52 @@ document.addEventListener("DOMContentLoaded", () => {
     // Add delete button event listener
     headerItem.querySelector(".delete-btn").addEventListener("click", (e) => {
       const deleteBtn = e.target;
-
-      // If button shows the recycling emoji, change it to "Confirm"
-      if (deleteBtn.textContent === "♻️") {
-        deleteBtn.textContent = "Confirm";
-        deleteBtn.style.backgroundColor = "#ff0000";
-        deleteBtn.style.fontSize = "10px";
-        deleteBtn.style.padding = "2px 5px";
-        return;
+      
+      // Create a confirmation popup if it doesn't exist
+      let confirmationPopup = headerItem.querySelector('.delete-confirmation');
+      
+      if (!confirmationPopup) {
+        // Hide the delete button temporarily
+        deleteBtn.style.display = 'none';
+        
+        // Create a confirmation popup
+        confirmationPopup = document.createElement('div');
+        confirmationPopup.className = 'delete-confirmation';
+        confirmationPopup.style.position = 'absolute';
+        confirmationPopup.style.right = '5px';
+        confirmationPopup.style.top = '5px';
+        confirmationPopup.style.display = 'flex';
+        confirmationPopup.style.gap = '5px';
+        
+        // Create "Proceed" button
+        const proceedBtn = document.createElement('button');
+        proceedBtn.textContent = 'Proceed';
+        proceedBtn.style.backgroundColor = '#ff0000';
+        proceedBtn.style.fontSize = '10px';
+        proceedBtn.style.padding = '2px 5px';
+        proceedBtn.addEventListener('click', () => {
+          deleteHeader(header.id);
+        });
+        
+        // Create "Cancel" button
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.style.backgroundColor = '#999';
+        cancelBtn.style.fontSize = '10px';
+        cancelBtn.style.padding = '2px 5px';
+        cancelBtn.addEventListener('click', () => {
+          // Remove the confirmation popup and show the delete button again
+          confirmationPopup.remove();
+          deleteBtn.style.display = 'block';
+        });
+        
+        // Add buttons to the popup
+        confirmationPopup.appendChild(proceedBtn);
+        confirmationPopup.appendChild(cancelBtn);
+        
+        // Add the popup to the header item
+        headerItem.appendChild(confirmationPopup);
       }
-
-      // If button already says "Confirm", delete the header
-      deleteHeader(header.id);
     });
 
     // Add edit button event listener
@@ -631,18 +665,52 @@ document.addEventListener("DOMContentLoaded", () => {
       .querySelector(".delete-btn")
       .addEventListener("click", (e) => {
         const deleteBtn = e.target;
-
-        // If button shows the recycling emoji, change it to "Confirm"
-        if (deleteBtn.textContent === "♻️") {
-          deleteBtn.textContent = "Confirm";
-          deleteBtn.style.backgroundColor = "#ff0000";
-          deleteBtn.style.fontSize = "10px";
-          deleteBtn.style.padding = "2px 5px";
-          return;
+        
+        // Create a confirmation popup if it doesn't exist
+        let confirmationPopup = dictionaryItem.querySelector('.delete-confirmation');
+        
+        if (!confirmationPopup) {
+          // Hide the delete button temporarily
+          deleteBtn.style.display = 'none';
+          
+          // Create a confirmation popup
+          confirmationPopup = document.createElement('div');
+          confirmationPopup.className = 'delete-confirmation';
+          confirmationPopup.style.position = 'absolute';
+          confirmationPopup.style.right = '5px';
+          confirmationPopup.style.top = '5px';
+          confirmationPopup.style.display = 'flex';
+          confirmationPopup.style.gap = '5px';
+          
+          // Create "Proceed" button
+          const proceedBtn = document.createElement('button');
+          proceedBtn.textContent = 'Proceed';
+          proceedBtn.style.backgroundColor = '#ff0000';
+          proceedBtn.style.fontSize = '10px';
+          proceedBtn.style.padding = '2px 5px';
+          proceedBtn.addEventListener('click', () => {
+            deleteDictionaryEntry(entry.id);
+          });
+          
+          // Create "Cancel" button
+          const cancelBtn = document.createElement('button');
+          cancelBtn.textContent = 'Cancel';
+          cancelBtn.style.backgroundColor = '#999';
+          cancelBtn.style.fontSize = '10px';
+          cancelBtn.style.padding = '2px 5px';
+          cancelBtn.addEventListener('click', () => {
+            // Remove the confirmation popup and show the delete button again
+            confirmationPopup.remove();
+            deleteBtn.style.display = 'block';
+          });
+          
+          // Add buttons to the popup
+          confirmationPopup.appendChild(proceedBtn);
+          confirmationPopup.appendChild(cancelBtn);
+          
+          // Add the popup to the dictionary item
+          dictionaryItem.appendChild(confirmationPopup);
         }
-
-        // If button already says "Confirm", delete the dictionary entry
-        deleteDictionaryEntry(entry.id);
       });
 
     // Add edit button event listener
