@@ -327,6 +327,67 @@
         border-style: solid;
         border-color: #222 transparent transparent transparent;
       }
+
+      /* Add styles for multiple headers UI */
+      .header-entry {
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        position: relative;
+      }
+
+      .header-entries-container {
+        margin-top: 10px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .remove-header-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: #ff4c4c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 10px;
+        padding: 2px 5px;
+      }
+
+      .add-header-btn {
+        background-color: #4caf50;
+        margin-top: 10px;
+      }
+
+      .header-item .header-detail {
+        color: #0d6efd;
+        font-style: italic;
+        font-size: 12px;
+        margin-top: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        display: block;
+      }
+
+      .header-item .headers-list {
+        /* margin-top: 10px; */
+        margin-left: 10px;
+      }
+
+      .header-item .header-entry-display {
+        /* margin-bottom: 5px; */
+        /* padding: 3px 0; */
+        border-bottom: 1px dotted #eee;
+      }
+
+      /* Adjust existing styling for the new structure */
+      .value-source-dictionary, .value-source-manual {
+        margin-top: 5px;
+      }
     </style>
   </head>
   <body>
@@ -349,31 +410,8 @@
     <div id="headers-tab" class="tab-content active">
       <form id="header-form">
         <div class="form-group">
-          <label for="header-label">Label:</label>
-          <input type="text" id="header-label" placeholder="My Custom Header" required />
-        </div>
-
-        <div class="form-group">
-          <label for="header-name">Header Name:</label>
-          <input type="text" id="header-name" placeholder="X-Custom-Header" required />
-        </div>
-
-        <div class="form-group value-source-group">
-          <label style="display: inline-block; margin-right: 10px">Value Source:</label>
-          <label class="radio-label"> <input type="radio" name="value-source" value="manual" checked /> Manual </label>
-          <label class="radio-label"> <input type="radio" name="value-source" value="dictionary" /> Dictionary </label>
-        </div>
-
-        <div class="form-group value-source-manual">
-          <label for="header-value">Header Value:</label>
-          <input type="text" id="header-value" placeholder="CustomValue" required />
-        </div>
-
-        <div class="form-group value-source-dictionary" style="display: none">
-          <label for="header-value-key">Select Value:</label>
-          <select id="header-value-key">
-            <option value="">-- Select from dictionary --</option>
-          </select>
+          <label for="header-label">Rule Label:</label>
+          <input type="text" id="header-label" placeholder="My Custom Rule" required />
         </div>
 
         <div class="form-group">
@@ -395,7 +433,46 @@
           />
         </div>
 
-        <button type="submit">Add Header</button>
+        <h4>Headers</h4>
+        <div id="header-entries-container" class="header-entries-container">
+          <!-- Header entries will be added here dynamically -->
+          <div class="header-entry" data-index="0">
+            <button type="button" class="remove-header-btn" title="Remove this header">&#9851;&#65039;</button>
+
+            <div class="form-group">
+              <label for="header-name-0">Header Name:</label>
+              <input type="text" id="header-name-0" class="header-name" placeholder="X-Custom-Header" required />
+            </div>
+
+            <div class="form-group value-source-group">
+              <label style="display: inline-block; margin-right: 10px">Value Source:</label>
+              <label class="radio-label">
+                <input type="radio" name="value-source-0" value="manual" class="value-source" checked /> Manual
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="value-source-0" value="dictionary" class="value-source" /> Dictionary
+              </label>
+            </div>
+
+            <div class="form-group value-source-manual">
+              <label for="header-value-0">Header Value:</label>
+              <input type="text" id="header-value-0" class="header-value" placeholder="CustomValue" required />
+            </div>
+
+            <div class="form-group value-source-dictionary" style="display: none">
+              <label for="header-value-key-0">Select Value:</label>
+              <select id="header-value-key-0" class="header-value-key">
+                <option value="">-- Select from dictionary --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" id="add-header-btn" class="add-header-btn">Add Another Header</button>
+
+        <div style="margin-top: 20px;">
+          <button type="submit">Add Rule</button>
+        </div>
       </form>
 
       <!-- Filter inputs and criteria for headers -->
@@ -433,7 +510,6 @@
 
     <!-- Dictionary Tab Content -->
     <div id="dictionary-tab" class="tab-content">
-
       <form id="dictionary-form">
         <div class="form-group">
           <label for="dict-key">Key Name:</label>
@@ -457,7 +533,7 @@
       Note: Changes will apply after you reload the affected pages.
     </p>
 
-    <script src="popup.js"></script>
-    <script src="tooltip.js"></script>
+    <script type="module" src="popup.js"></script>
+    <script type="module" src="tooltip.js"></script>
   </body>
 </html>
