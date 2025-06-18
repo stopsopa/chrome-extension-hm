@@ -417,13 +417,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let valueDisplay;
     if (header.valueSource === "dictionary") {
-      valueDisplay = `<div class="header-value">From dictionary: <span class="dict-reference">${escapeHtml(
+      valueDisplay = `<div class="header-value"><b>Value:</b> (from dictionary) ${escapeHtml(
         header.value
-      )}</span></div>`;
+      )}</div>`;
     } else {
-      valueDisplay = `<div class="header-value">Plane value: <span class="dict-reference">${escapeHtml(
+      valueDisplay = `<div class="header-value"><b>Value:</b> ${escapeHtml(
         header.value
-      )}</span></div>`;
+      )}</div>`;
     }
 
     headerItem.innerHTML = `
@@ -431,7 +431,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <button class="delete-btn" title="Delete this header">&#9851;&#65039;</button>
       <button class="edit-btn" title="Edit this header">&#9999;&#65039;</button>
       ${labelDisplay}
-      <div class="header-name">${escapeHtml(header.name)}</div>
+      <div class="header-name-display"><b>Header:</b> ${escapeHtml(header.name)}</div>
       ${valueDisplay}
       <div class="url-pattern"><b>Pattern:</b> ${escapeHtml(
         header.urlPattern
