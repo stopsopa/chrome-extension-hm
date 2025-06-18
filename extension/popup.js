@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const cancelButton = document.createElement("button");
   cancelButton.textContent = "Cancel";
   cancelButton.type = "button";
-  cancelButton.id = "cancel-edit";
+  cancelButton.className = "cancel-edit-btn";
 
   cancelButton.addEventListener("click", () => {
     // Reset form and editing state
@@ -266,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
         editingHeaderId = null;
         document.querySelector('button[type="submit"]').textContent =
           "Add Header";
-        document.getElementById("cancel-edit").style.display = "none";
+        document.querySelector('.cancel-edit-btn').style.display = "none";
         createNewButton.style.display = "none";
       });
     });
@@ -530,7 +530,7 @@ document.addEventListener("DOMContentLoaded", () => {
         editingHeaderId = id;
         document.querySelector('button[type="submit"]').textContent =
           "Update Header";
-        document.getElementById("cancel-edit").style.display = "inline-block";
+        document.querySelector('.cancel-edit-btn').style.display = "inline-block";
         document.getElementById("create-new").style.display = "inline-block";
 
         // Scroll to top of the page to show the form
@@ -568,7 +568,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateRules(updatedHeaders);
 
         // Hide buttons
-        document.getElementById("cancel-edit").style.display = "none";
+        document.querySelector('.cancel-edit-btn').style.display = "none";
         document.getElementById("create-new").style.display = "none";
         createNewButton.textContent = "Create New";
       });
