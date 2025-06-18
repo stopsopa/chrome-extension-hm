@@ -158,9 +158,6 @@ document.addEventListener("DOMContentLoaded", () => {
   cancelButton.textContent = "Cancel";
   cancelButton.type = "button";
   cancelButton.id = "cancel-edit";
-  cancelButton.style.backgroundColor = "#999";
-  cancelButton.style.marginLeft = "10px";
-  cancelButton.style.display = "none";
 
   cancelButton.addEventListener("click", () => {
     // Reset form and editing state
@@ -452,37 +449,28 @@ document.addEventListener("DOMContentLoaded", () => {
         // Create a confirmation popup
         confirmationPopup = document.createElement('div');
         confirmationPopup.className = 'delete-confirmation';
-        confirmationPopup.style.position = 'absolute';
-        confirmationPopup.style.right = '5px';
-        confirmationPopup.style.top = '5px';
-        confirmationPopup.style.display = 'flex';
-        confirmationPopup.style.gap = '5px';
-        
-        // Create "Proceed" button
-        const proceedBtn = document.createElement('button');
-        proceedBtn.textContent = 'Proceed';
-        proceedBtn.style.backgroundColor = '#ff0000';
-        proceedBtn.style.fontSize = '10px';
-        proceedBtn.style.padding = '2px 5px';
-        proceedBtn.addEventListener('click', () => {
-          deleteHeader(header.id);
-        });
         
         // Create "Cancel" button
         const cancelBtn = document.createElement('button');
         cancelBtn.textContent = 'Cancel';
-        cancelBtn.style.backgroundColor = '#999';
-        cancelBtn.style.fontSize = '10px';
-        cancelBtn.style.padding = '2px 5px';
+        cancelBtn.className = 'cancel-btn';
         cancelBtn.addEventListener('click', () => {
           // Remove the confirmation popup and show the delete button again
           confirmationPopup.remove();
           deleteBtn.style.display = 'block';
         });
         
-        // Add buttons to the popup
-        confirmationPopup.appendChild(proceedBtn);
+        // Create "Proceed" button
+        const proceedBtn = document.createElement('button');
+        proceedBtn.textContent = 'Proceed';
+        proceedBtn.className = 'proceed-btn';
+        proceedBtn.addEventListener('click', () => {
+          deleteHeader(header.id);
+        });
+        
+        // Add buttons to the popup - Cancel first, then Proceed
         confirmationPopup.appendChild(cancelBtn);
+        confirmationPopup.appendChild(proceedBtn);
         
         // Add the popup to the header item
         headerItem.appendChild(confirmationPopup);
@@ -676,37 +664,28 @@ document.addEventListener("DOMContentLoaded", () => {
           // Create a confirmation popup
           confirmationPopup = document.createElement('div');
           confirmationPopup.className = 'delete-confirmation';
-          confirmationPopup.style.position = 'absolute';
-          confirmationPopup.style.right = '5px';
-          confirmationPopup.style.top = '5px';
-          confirmationPopup.style.display = 'flex';
-          confirmationPopup.style.gap = '5px';
-          
-          // Create "Proceed" button
-          const proceedBtn = document.createElement('button');
-          proceedBtn.textContent = 'Proceed';
-          proceedBtn.style.backgroundColor = '#ff0000';
-          proceedBtn.style.fontSize = '10px';
-          proceedBtn.style.padding = '2px 5px';
-          proceedBtn.addEventListener('click', () => {
-            deleteDictionaryEntry(entry.id);
-          });
           
           // Create "Cancel" button
           const cancelBtn = document.createElement('button');
           cancelBtn.textContent = 'Cancel';
-          cancelBtn.style.backgroundColor = '#999';
-          cancelBtn.style.fontSize = '10px';
-          cancelBtn.style.padding = '2px 5px';
+          cancelBtn.className = 'cancel-btn';
           cancelBtn.addEventListener('click', () => {
             // Remove the confirmation popup and show the delete button again
             confirmationPopup.remove();
             deleteBtn.style.display = 'block';
           });
           
+          // Create "Proceed" button
+          const proceedBtn = document.createElement('button');
+          proceedBtn.textContent = 'Proceed';
+          proceedBtn.className = 'proceed-btn';
+          proceedBtn.addEventListener('click', () => {
+            deleteDictionaryEntry(entry.id);
+          });
+          
           // Add buttons to the popup
-          confirmationPopup.appendChild(proceedBtn);
           confirmationPopup.appendChild(cancelBtn);
+          confirmationPopup.appendChild(proceedBtn);
           
           // Add the popup to the dictionary item
           dictionaryItem.appendChild(confirmationPopup);

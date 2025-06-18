@@ -87,6 +87,14 @@
       button:hover {
         background-color: #3367d6;
       }
+      #cancel-edit {
+        background-color: #999;
+        margin-left: 10px;
+        display: none;
+      }
+      #cancel-edit:hover {
+        background-color: #777;
+      }
       .header-list,
       .dictionary-list {
         max-height: 350px;
@@ -125,6 +133,32 @@
         cursor: pointer;
         font-size: 10px;
         padding: 2px 5px;
+      }
+      .delete-confirmation {
+        background-color: #f0f0f0;
+        position: absolute;
+        right: 5px;
+        top: 5px;
+        display: flex;
+        gap: 5px;
+      }
+      .cancel-btn {
+        background-color: #999;
+        font-size: 13px;
+        padding: 2px 5px;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .proceed-btn {
+        background-color: #ff0000;
+        font-size: 13px;
+        padding: 2px 5px;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
       }
       .edit-btn {
         position: absolute;
