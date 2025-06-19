@@ -427,8 +427,8 @@ document.addEventListener("DOMContentLoaded", () => {
           displayHeader({
             id,
             label: headerLabel,
-            urlPattern: urlPattern,
-            headers: headers,
+            urlPattern,
+            headers,
             active: true
           });
         }
@@ -694,7 +694,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <button class="delete-btn" title="Delete this rule">&#9851;&#65039;</button>
       <button class="edit-btn" title="Edit this rule">&#9999;&#65039;</button>
       ${labelDisplay}
-      <div class="header-detail"><b>Pattern:</b> ${escapeHtml(header.urlPattern)}</div>
+      <div class="header-detail">
+        <b>Pattern:</b> 
+        <input type="text" class="url-pattern-input" value="${escapeHtml(header.urlPattern)}" readonly title="Click to select for copying">
+      </div>
       ${headersListHtml}
     `;
 
@@ -750,6 +753,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const isActive = e.target.checked;
       toggleHeaderActive(header.id, isActive);
     });
+
+    // Add event listener to URL pattern input to select all text when clicked
+    const urlPatternInput = headerItem.querySelector(".url-pattern-input");
+    if (urlPatternInput) {
+      urlPatternInput.addEventListener("click", selectAllOnClick);
+    }
 
     headerList.appendChild(headerItem);
   }
@@ -1402,6 +1411,11 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     reader.readAsText(file);
   });
+
+  // Function to select all text in an input field when clicked
+  function selectAllOnClick(event) {
+    event.target.select();
+  }
 
   // Helper function to escape HTML
   function escapeHtml(str) {
