@@ -1,7 +1,7 @@
 // background.js - Handles dynamic rule updates and extension lifecycle
 
-// Import any dependencies (to be added if needed)
-// import { someFunction } from './utils.js';
+// Import format conversion utilities
+import { toList } from "./formats.js";
 
 // Check extension status on startup and after browser restart
 chrome.runtime.onStartup.addListener(() => {
@@ -41,11 +41,11 @@ function checkExtensionState() {
 chrome.runtime.onInstalled.addListener(() => {
   // Initialize storage with empty headers array if needed
   chrome.storage.local.get("customHeaders", (data) => {
-    if (!data.customHeaders) {
-      chrome.storage.local.set({ customHeaders: [] });
-    } else {
+    if (data.customHeaders) {
       // If we have headers saved, update the rules
       updateRules(data.customHeaders);
+    } else {
+      chrome.storage.local.set({ customHeaders: [] });
     }
   });
 });
@@ -102,7 +102,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // New structure handling
         if (header.headers) {
           processedHeader.resolvedHeaders = {};
-          
+
           for (const [headerName, headerConfig] of Object.entries(header.headers)) {
             if (headerConfig.source === "dictionary") {
               const dictValue = dictionaryMap[headerConfig.value];
@@ -111,16 +111,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               processedHeader.resolvedHeaders[headerName] = headerConfig.value;
             }
           }
-        } 
+        }
         // Legacy structure handling
         else if (header.valueSource === "dictionary") {
           if (dictionaryMap[header.value]) {
             processedHeader.resolvedValue = dictionaryMap[header.value];
           } else {
             processedHeader.resolvedValue = header.value;
-            console.warn(
-              `Dictionary key "${header.value}" not found for header "${header.name}"`
-            );
           }
         } else {
           processedHeader.resolvedValue = header.value;
@@ -140,14 +137,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.get(["customHeaders"], (data) => {
       let headers = data.customHeaders || [];
       headers = headers.slice().sort((a, b) => {
-        const labelA = (a.label || '').toLowerCase();
-        const labelB = (b.label || '').toLowerCase();
+        const labelA = (a.label || "").toLowerCase();
+        const labelB = (b.label || "").toLowerCase();
         if (labelA < labelB) return -1;
         if (labelA > labelB) return 1;
         return 0;
       });
+      // Convert to list format before exporting
+      const listFormatHeaders = toList(headers);
       sendResponse({
-        json: JSON.stringify(headers, null, 2)
+        json: JSON.stringify(listFormatHeaders, null, 2),
       });
     });
     return true;
@@ -156,8 +155,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     try {
       const imported = JSON.parse(message.json);
       if (Array.isArray(imported)) {
-        chrome.storage.local.set({ customHeaders: imported }, () => {
-          updateRules(imported);
+        // Convert to flat format for storage
+        const flatFormat = toList(imported);
+        chrome.storage.local.set({ customHeaders: flatFormat }, () => {
+          updateRules(flatFormat);
           sendResponse({ success: true });
         });
       } else {
@@ -168,11 +169,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     return true;
   }
-});
-
-// Function to update the declarativeNetRequest rules
+}); // Function to update the declarativeNetRequest rules
 function updateRules(headers) {
-  // First, get the current dictionary values
+  // Convert headers to the list format for rule processing if needed
+  const listFormatHeaders = toList(headers);
   chrome.storage.local.get("dictionary", (dictionaryData) => {
     const dictionary = dictionaryData.dictionary || [];
 
@@ -196,45 +196,43 @@ function updateRules(headers) {
           // Generate new rules from headers
           let ruleIdCounter = 1;
           let newRules = [];
-          
-          // Process each header rule
-          headers.forEach((rule) => {
+
+          // Process each header rule - using the list format
+          listFormatHeaders.forEach((rule) => {
             // Handle the new format (headers object)
             if (rule.headers && Object.keys(rule.headers).length > 0) {
               const requestHeaders = [];
-              
+
               // Process each header in the rule
               for (const [headerName, headerConfig] of Object.entries(rule.headers)) {
                 // Validate header name - skip if empty or invalid
-                if (!headerName || headerName.trim() === '') {
-                  console.warn("Skipping header with empty name in rule:", rule.label || "Unnamed rule");
+                if (!headerName || headerName.trim() === "") {
                   continue;
                 }
-                
+
                 // Determine the actual value to use
                 let headerValue = headerConfig.value;
-                
+
                 // If this header uses a dictionary value, look up the fresh value
                 if (headerConfig.source === "dictionary") {
                   if (dictionaryMap[headerConfig.value]) {
                     headerValue = dictionaryMap[headerConfig.value];
                   }
                 }
-                
+
                 // Validate header value - use empty string if undefined/null
                 if (headerValue === undefined || headerValue === null) {
-                  headerValue = '';
-                  console.warn(`Using empty value for header "${headerName}" in rule: ${rule.label || "Unnamed rule"}`);
+                  headerValue = "";
                 }
-                
+
                 // Add this header to the request headers array
                 requestHeaders.push({
                   header: headerName.trim(),
                   operation: "set",
-                  value: String(headerValue) // Ensure value is a string
+                  value: String(headerValue), // Ensure value is a string
                 });
               }
-              
+
               // Only create a rule if we have headers to add
               if (requestHeaders.length > 0) {
                 newRules.push({
@@ -242,7 +240,7 @@ function updateRules(headers) {
                   priority: 1,
                   action: {
                     type: "modifyHeaders",
-                    requestHeaders: requestHeaders
+                    requestHeaders: requestHeaders,
                   },
                   condition: {
                     urlFilter: rule.urlPattern || "*",
@@ -261,18 +259,17 @@ function updateRules(headers) {
                       "websocket",
                       "other",
                     ],
-                  }
+                  },
                 });
               }
-            } 
+            }
             // Handle the legacy format
             else if (rule.name) {
               // Validate header name - skip if empty
-              if (!rule.name || rule.name.trim() === '') {
-                console.warn("Skipping rule with empty header name:", rule.label || "Unnamed rule");
+              if (!rule.name || rule.name.trim() === "") {
                 return;
               }
-              
+
               // Determine the actual value to use
               let headerValue = rule.value;
 
@@ -282,11 +279,10 @@ function updateRules(headers) {
                   headerValue = dictionaryMap[rule.value];
                 }
               }
-              
+
               // Validate header value - use empty string if undefined/null
               if (headerValue === undefined || headerValue === null) {
-                headerValue = '';
-                console.warn(`Using empty value for header "${rule.name}" in rule: ${rule.label || "Unnamed rule"}`);
+                headerValue = "";
               }
 
               newRules.push({
@@ -298,7 +294,7 @@ function updateRules(headers) {
                     {
                       header: rule.name.trim(),
                       operation: "set",
-                      value: String(headerValue) // Ensure value is a string
+                      value: String(headerValue), // Ensure value is a string
                     },
                   ],
                 },
@@ -329,167 +325,132 @@ function updateRules(headers) {
           for (let i = 0; i < newRules.length; i++) {
             const rule = newRules[i];
             let isValid = true;
-            
+
             // Validate each header in requestHeaders
             if (rule.action && rule.action.requestHeaders) {
               for (let j = 0; j < rule.action.requestHeaders.length; j++) {
                 const headerObj = rule.action.requestHeaders[j];
-                
+
                 // Check for missing or invalid header name
-                if (!headerObj.header || typeof headerObj.header !== 'string' || headerObj.header.trim() === '') {
-                  console.error(`Invalid header name in rule #${i+1} (ID: ${rule.id}): ${JSON.stringify(headerObj)}`);
+                if (!headerObj.header || typeof headerObj.header !== "string" || headerObj.header.trim() === "") {
                   isValid = false;
                   break;
                 }
-                
+
                 // Fix header names containing spaces (take only the first part)
-                if (headerObj.header.includes(' ')) {
-                  console.warn(`Header name contains spaces in rule #${i+1} (ID: ${rule.id}): "${headerObj.header}"`);
+                if (headerObj.header.includes(" ")) {
                   // Get the first part of the header name (before the space)
-                  const fixedHeaderName = headerObj.header.split(' ')[0];
-                  console.log(`Fixed header name: "${fixedHeaderName}"`);
+                  const fixedHeaderName = headerObj.header.split(" ")[0];
                   headerObj.header = fixedHeaderName;
                 }
-                
+
                 // Ensure value is a valid string
                 if (headerObj.value === undefined || headerObj.value === null) {
-                  console.warn(`Fixed missing value in rule #${i+1} (ID: ${rule.id}), header: ${headerObj.header}`);
-                  headerObj.value = '';
+                  headerObj.value = "";
                 }
-                
+
                 // Force convert value to string (Chrome API requires string values)
                 headerObj.value = String(headerObj.value);
               }
             } else {
-              console.error(`Rule #${i+1} (ID: ${rule.id}) is missing action.requestHeaders property`);
               isValid = false;
             }
-            
+
             if (isValid) {
               validRules.push(rule);
-            } else {
-              console.warn(`Skipping invalid rule #${i+1} (ID: ${rule.id})`);
-            }
+            } 
           }
-          
+
           // Replace newRules with only the valid ones
           newRules = validRules;
-          
+
           // Safety check - don't proceed if we have no valid rules
           if (newRules.length === 0) {
-            console.warn("No valid rules to add - skipping declarativeNetRequest update");
             return;
-          }
-
-          // Add logging to help debug
-          console.log("Updating rules:", newRules);
-
-          // Add detailed logging for rule #9 specifically since it's failing
-          const rule9 = newRules.find(r => r.id === 9);
-          if (rule9) {
-            console.log("Detailed inspection of rule #9:", {
-              id: rule9.id,
-              hasAction: !!rule9.action,
-              hasRequestHeaders: !!(rule9.action && rule9.action.requestHeaders),
-              requestHeadersCount: rule9.action && rule9.action.requestHeaders ? rule9.action.requestHeaders.length : 0,
-              requestHeaders: rule9.action && rule9.action.requestHeaders ? rule9.action.requestHeaders : [],
-              urlFilter: rule9.condition && rule9.condition.urlFilter
-            });
           }
 
           try {
             // Update the rules
-            chrome.declarativeNetRequest.updateDynamicRules({
-              removeRuleIds: ruleIdsToRemove,
-              addRules: newRules,
-            }, (result) => {
-              if (chrome.runtime.lastError) {
-                // Improved error logging with detailed error information
-                const errorInfo = {
-                  message: chrome.runtime.lastError.message,
-                  error: chrome.runtime.lastError
-                };
-                console.error("Error updating rules:", JSON.stringify(errorInfo, null, 2));
-                
-                // Extract rule ID from error message if possible
-                const idMatch = errorInfo.message.match(/Rule with id (\d+)/);
-                if (idMatch && idMatch[1]) {
-                  const problemRuleId = parseInt(idMatch[1]);
-                  const problemRule = newRules.find(r => r.id === problemRuleId);
-                  
-                  if (problemRule) {
-                    console.error(`Problematic rule #${problemRuleId}:`, JSON.stringify(problemRule, null, 2));
-                    
-                    // Try to fix the problem in storage
-                    chrome.storage.local.get("customHeaders", (data) => {
-                      if (data.customHeaders && Array.isArray(data.customHeaders)) {
-                        let fixedAny = false;
-                        
-                        // Fix any headers with spaces in the stored data
-                        const fixedHeaders = data.customHeaders.map(rule => {
-                          if (rule.headers) {
-                            const fixedHeadersObj = {};
-                            let madeChanges = false;
-                            
-                            // Check each header name for spaces
-                            for (const [headerName, headerConfig] of Object.entries(rule.headers)) {
-                              if (headerName.includes(' ')) {
-                                // Use only the part before the space
-                                const fixedName = headerName.split(' ')[0];
-                                fixedHeadersObj[fixedName] = headerConfig;
-                                madeChanges = true;
-                                fixedAny = true;
-                                console.log(`Fixed header name in storage: "${headerName}" -> "${fixedName}"`);
-                              } else {
-                                fixedHeadersObj[headerName] = headerConfig;
+            chrome.declarativeNetRequest.updateDynamicRules(
+              {
+                removeRuleIds: ruleIdsToRemove,
+                addRules: newRules,
+              },
+              (result) => {
+                if (chrome.runtime.lastError) {
+                  // Improved error logging with detailed error information
+                  const errorInfo = {
+                    message: chrome.runtime.lastError.message,
+                    error: chrome.runtime.lastError,
+                  };
+
+                  // Extract rule ID from error message if possible
+                  const idMatch = errorInfo.message.match(/Rule with id (\d+)/);
+                  if (idMatch && idMatch[1]) {
+                    const problemRuleId = parseInt(idMatch[1]);
+                    const problemRule = newRules.find((r) => r.id === problemRuleId);
+
+                    if (problemRule) {
+
+                      // Try to fix the problem in storage
+                      chrome.storage.local.get("customHeaders", (data) => {
+                        if (data.customHeaders && Array.isArray(data.customHeaders)) {
+                          let fixedAny = false;
+
+                          // Fix any headers with spaces in the stored data
+                          const fixedHeaders = data.customHeaders.map((rule) => {
+                            if (rule.headers) {
+                              const fixedHeadersObj = {};
+                              let madeChanges = false;
+
+                              // Check each header name for spaces
+                              for (const [headerName, headerConfig] of Object.entries(rule.headers)) {
+                                if (headerName.includes(" ")) {
+                                  // Use only the part before the space
+                                  const fixedName = headerName.split(" ")[0];
+                                  fixedHeadersObj[fixedName] = headerConfig;
+                                  madeChanges = true;
+                                  fixedAny = true;
+                                } else {
+                                  fixedHeadersObj[headerName] = headerConfig;
+                                }
                               }
+
+                              if (madeChanges) {
+                                return { ...rule, headers: fixedHeadersObj };
+                              }
+                            } else if (rule.name && rule.name.includes(" ")) {
+                              // Fix legacy format headers with spaces
+                              const fixedName = rule.name.split(" ")[0];
+                              fixedAny = true;
+                              return { ...rule, name: fixedName };
                             }
-                            
-                            if (madeChanges) {
-                              return { ...rule, headers: fixedHeadersObj };
-                            }
-                          } else if (rule.name && rule.name.includes(' ')) {
-                            // Fix legacy format headers with spaces
-                            const fixedName = rule.name.split(' ')[0];
-                            fixedAny = true;
-                            console.log(`Fixed legacy header name in storage: "${rule.name}" -> "${fixedName}"`);
-                            return { ...rule, name: fixedName };
-                          }
-                          return rule;
-                        });
-                        
-                        // Save the fixed headers back to storage
-                        if (fixedAny) {
-                          chrome.storage.local.set({ customHeaders: fixedHeaders }, () => {
-                            console.log("Fixed headers with spaces in storage");
+                            return rule;
                           });
+
+                          // Save the fixed headers back to storage
+                          if (fixedAny) {
+                            // Convert to flat format before saving
+                            chrome.storage.local.set({ customHeaders: toList(fixedHeaders) });
+                          }
                         }
-                      }
-                    });
+                      });
+                    }
                   }
                 }
-                
-                // Log each rule for debugging
-                newRules.forEach((rule, index) => {
-                  console.log(`Rule #${index + 1} (ID: ${rule.id}):`, 
-                    JSON.stringify(rule, null, 2));
-                });
-              } else {
-                console.log("Rules updated successfully");
               }
-            });
+            );
           } catch (err) {
-            console.error("Exception when updating rules:", err);
-            
+
             // Emergency cleanup
             chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
               const cleanupRuleIds = existingRules.map((rule) => rule.id);
-              chrome.declarativeNetRequest.updateDynamicRules({
-                removeRuleIds: cleanupRuleIds,
-                addRules: [],
-              }, () => {
-                console.log("Emergency cleanup completed after error");
-              });
+              chrome.declarativeNetRequest.updateDynamicRules(
+                {
+                  removeRuleIds: cleanupRuleIds,
+                  addRules: [],
+                }
+              );
             });
           }
         });
@@ -507,9 +468,6 @@ function clearAllRules() {
       {
         removeRuleIds: ruleIdsToRemove,
         addRules: [],
-      },
-      () => {
-        console.log("All header rules cleared - extension disabled");
       }
     );
   });
@@ -524,9 +482,7 @@ function updateExtensionIcon(enabled) {
   chrome.action.setIcon({ path: iconPath });
 
   // Also update the tooltip
-  const title = enabled
-    ? "Request Header Modifier (Enabled)"
-    : "Request Header Modifier (Disabled)";
+  const title = enabled ? "Request Header Modifier (Enabled)" : "Request Header Modifier (Disabled)";
   chrome.action.setTitle({ title: title });
 }
 

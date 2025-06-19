@@ -1,8 +1,5 @@
 // popup.js - Handles the popup UI and user interactions
 
-// Import any dependencies (to be added if needed)
-// import { someFunction } from './utils.js';
-
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize filter variables globally at the top
   let filterValue = '';
@@ -1312,8 +1309,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // === Export/Import Custom Headers ===
   const exportBtn = document.getElementById('export-headers-btn');
-  const importBtn = document.getElementById('import-headers-btn');
-  const importFile = document.getElementById('import-headers-file');
+  const clearBtn = document.getElementById('clear-headers-btn');
   const importAddBtn = document.getElementById('import-headers-add-btn');
   const importAddFile = document.getElementById('import-headers-add-file');
 
@@ -1335,78 +1331,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  importBtn.addEventListener('click', () => {
-    importFile.value = '';
-    importFile.click();
-  });
-
-  importFile.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const json = event.target.result;
-      
-      try {
-        // Try to parse the JSON to check format
-        const data = JSON.parse(json);
-        
-        // Check if we need to migrate old format
-        if (data.length > 0 && data[0].name !== undefined) {
-          // Migrate old format to new format
-          const migratedData = data.map(h => {
-            return {
-              id: h.id,
-              label: h.label || '',
-              urlPattern: h.urlPattern || '*',
-              active: h.active !== false,
-              headers: {
-                [h.name]: {
-                  value: h.value || '',
-                  source: h.valueSource || 'manual'
-                }
-              }
-            };
-          });
-          
-          // Use migrated data for import
-          chrome.runtime.sendMessage({ 
-            action: 'importCustomHeaders', 
-            json: JSON.stringify(migratedData) 
-          }, (response) => {
-            if (response && response.success) {
-              // Respect filtering when loading headers after import
-              if (filterValue) {
-                renderFilteredHeaders();
-              } else {
-                loadHeaders();
-              }
-              alert('Headers imported successfully! (Converted from old format)');
-            } else {
-              alert('Import failed: ' + (response && response.error ? response.error : 'Unknown error'));
-            }
-          });
-        } else {
-          // Use the JSON as is
-          chrome.runtime.sendMessage({ action: 'importCustomHeaders', json }, (response) => {
-            if (response && response.success) {
-              // Respect filtering when loading headers after import
-              if (filterValue) {
-                renderFilteredHeaders();
-              } else {
-                loadHeaders();
-              }
-              alert('Headers imported successfully!');
-            } else {
-              alert('Import failed: ' + (response && response.error ? response.error : 'Unknown error'));
-            }
-          });
-        }
-      } catch (err) {
-        alert('Import failed: Invalid JSON format');
-      }
-    };
-    reader.readAsText(file);
+  clearBtn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to remove all headers?')) {
+      chrome.storage.local.set({ customHeaders: [] }, () => {
+        // Update the UI
+        headerList.innerHTML = '';
+        // Notify background script to clear rules
+        chrome.runtime.sendMessage({ action: 'updateRules', headers: [] });
+        alert('All headers have been cleared.');
+      });
+    }
   });
 
   importAddBtn.addEventListener('click', () => {

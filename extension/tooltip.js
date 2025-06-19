@@ -1,8 +1,5 @@
 // tooltip.js - Custom tooltip logic for elements with data-tooltip
 
-// Import any dependencies (to be added if needed)
-// import { someFunction } from './utils.js';
-
 document.addEventListener('DOMContentLoaded', function () {
   let tooltipDiv;
   function showTooltip(e) {

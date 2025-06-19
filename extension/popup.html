@@ -479,7 +479,7 @@
       <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px">
         <div style="position: relative; width: 100%;">
           <input type="search" id="header-filter-input" placeholder="Filter headers..." style="width: 100%; padding: 6px; padding-right: 24px; border-radius: 4px; border: 1px solid #ccc" />
-          <button id="clear-filter-btn" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; padding: 0; font-size: 14px; cursor: pointer; display: none;">✕</button>
+          <button id="clear-filter-btn" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; padding: 0; font-size: 14px; cursor: pointer; display: none;">x</button>
         </div>
         <div style="display: flex; gap: 10px; align-items: center">
           <label><input type="radio" name="header-filter-criteria" value="label" checked /> Label</label>
@@ -494,16 +494,15 @@
       </div>
 
       <div style="display: flex; gap: 10px; margin-top: 15px">
-        <button type="button" id="export-headers-btn">Export Headers</button>
+        <button type="button" id="export-headers-btn">Export</button>
         <span class="tooltip">
-          <button type="button" id="import-headers-btn">Clear & Import</button>
-          <span class="tooltiptext">Remove all elements from the list and import fresh from file</span>
+          <button type="button" id="clear-headers-btn">Clear</button>
+          <span class="tooltiptext">Remove all elements from the list</span>
         </span>
         <span class="tooltip">
-          <button type="button" id="import-headers-add-btn">Import & Add</button>
-          <span class="tooltiptext">Import headers but add to existing / extend the list with new headers</span>
+          <button type="button" id="import-headers-add-btn">Import</button>
+          <span class="tooltiptext">Import headers and add to the existing list</span>
         </span>
-        <input type="file" id="import-headers-file" accept="application/json" style="display: none" />
         <input type="file" id="import-headers-add-file" accept="application/json" style="display: none" />
       </div>
     </div>
