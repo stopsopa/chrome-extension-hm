@@ -1,6 +1,8 @@
 // background.js - Handles dynamic rule updates and extension lifecycle
 
-// Import any dependencies (to be added if needed)
+// Import format conversion utilities
+import { toFlat, toList } from './formats.js';
+// Import any other dependencies
 // import { someFunction } from './utils.js';
 
 // Check extension status on startup and after browser restart
@@ -146,8 +148,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (labelA > labelB) return 1;
         return 0;
       });
+      // Apply toFlat() to ensure consistent formatting
+      const flatHeaders = toList(headers);
       sendResponse({
-        json: JSON.stringify(headers, null, 2)
+        json: JSON.stringify(flatHeaders, null, 2)
       });
     });
     return true;
@@ -156,7 +160,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     try {
       const imported = JSON.parse(message.json);
       if (Array.isArray(imported)) {
-        chrome.storage.local.set({ customHeaders: imported }, () => {
+        chrome.storage.local.set({ customHeaders: toFlat(imported) }, () => {
           updateRules(imported);
           sendResponse({ success: true });
         });
