@@ -1,8 +1,5 @@
 // This script runs in the context of web pages
 
-// Import any dependencies (to be added if needed)
-// import { someFunction } from './utils.js';
-
 // All notification code has been removed
 // No visual notifications will be shown on web pages when headers are applied
 
