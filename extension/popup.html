@@ -13,14 +13,18 @@
         margin-top: 0;
         color: #4285f4;
       }
+      h4 {
+        margin-top: 4px;
+        margin-bottom: 4px;
+      }
       #dictionary-form,
       #header-form {
         margin-bottom: 15px;
-        padding: 15px;
+        padding: 7px;
         border: 1px solid rgb(198, 198, 198);
       }
       .form-group {
-        margin-bottom: 12px;
+        margin-bottom: 7px;
       }
       label {
         display: block;
@@ -37,6 +41,7 @@
         background-color: #f8f8f8;
         border-radius: 4px;
         border: 1px solid #eaeaea;
+        margin-bottom: 4px;
       }
       .toggle-label {
         margin-left: 10px;
@@ -187,7 +192,9 @@
         font-size: 14px;
         margin-bottom: 5px;
       }
-      .header-value, .url-pattern, .header-name-display {
+      .header-value,
+      .url-pattern,
+      .header-name-display {
         color: #0d6efd;
         font-style: italic;
         font-size: 12px;
@@ -230,16 +237,6 @@
         color: #ff9800;
         font-weight: bold;
         cursor: help;
-      }
-      /* Global extension toggle styles */
-      .global-toggle {
-        display: flex;
-        align-items: center;
-        margin-bottom: 15px;
-        padding: 10px;
-        background-color: #f8f8f8;
-        border-radius: 4px;
-        border: 1px solid #eaeaea;
       }
       .toggle-label {
         margin-left: 10px;
@@ -318,7 +315,7 @@
         opacity: 1;
       }
       .tooltip .tooltiptext::after {
-        content: '';
+        content: "";
         position: absolute;
         top: 100%;
         left: 50%;
@@ -358,7 +355,7 @@
 
       .add-header-btn {
         background-color: #4caf50;
-        margin-top: 10px;
+        /* margin-top: 10px; */
       }
 
       .header-item .header-detail {
@@ -385,7 +382,8 @@
       }
 
       /* Adjust existing styling for the new structure */
-      .value-source-dictionary, .value-source-manual {
+      .value-source-dictionary,
+      .value-source-manual {
         margin-top: 5px;
       }
 
@@ -402,12 +400,12 @@
         padding: 0 !important;
         font-family: inherit;
       }
-      
+
       .url-pattern-input:focus {
         outline: 1px dotted #4285f4;
         background-color: #f8f9fa;
       }
-      
+
       .url-pattern-input::selection {
         background-color: #4285f4;
         color: white;
@@ -442,7 +440,10 @@
           <label for="url-pattern"
             >URL Pattern (wildcard):
             <span class="tooltip">
-              <a href="https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest#url_filter_syntax" target="_blank">
+              <a
+                href="https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest#url_filter_syntax"
+                target="_blank"
+              >
                 <span style="font-size: 12px; color: #4285f4; text-decoration: underline">?</span>
               </a>
               <span class="tooltiptext">Learn about URL filter syntax</span>
@@ -492,18 +493,42 @@
           </div>
         </div>
 
-        <button type="button" id="add-header-btn" class="add-header-btn">Add Another Header</button>
 
-        <div style="margin-top: 20px;">
-          <button type="submit">Add Rule</button>
-        </div>
+        <span class="tooltip" style="float: right;">
+          <button type="button" id="add-header-btn" class="add-header-btn">+</button>
+          <span class="tooltiptext">Add another header</span>
+        </span>
+
+        <button type="submit">Add Rule</button>
       </form>
 
       <!-- Filter inputs and criteria for headers -->
       <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px">
-        <div style="position: relative; width: 100%;">
-          <input type="search" id="header-filter-input" placeholder="Filter headers..." style="width: 100%; padding: 6px; padding-right: 24px; border-radius: 4px; border: 1px solid #ccc" />
-          <button id="clear-filter-btn" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; padding: 0; font-size: 14px; cursor: pointer; display: none;">x</button>
+        <div style="position: relative; width: 100%">
+          <input
+            type="search"
+            id="header-filter-input"
+            placeholder="Filter headers..."
+            style="width: 100%; padding: 6px; padding-right: 24px; border-radius: 4px; border: 1px solid #ccc"
+          />
+          <button
+            id="clear-filter-btn"
+            style="
+              position: absolute;
+              right: 6px;
+              top: 50%;
+              transform: translateY(-50%);
+              background: none;
+              border: none;
+              color: #999;
+              padding: 0;
+              font-size: 14px;
+              cursor: pointer;
+              display: none;
+            "
+          >
+            x
+          </button>
         </div>
         <div style="display: flex; gap: 10px; align-items: center">
           <label><input type="radio" name="header-filter-criteria" value="label" checked /> Label</label>
