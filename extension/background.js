@@ -194,8 +194,11 @@ function updateRules(headers) {
           const ruleIdsToRemove = existingRules.map((rule) => rule.id);
 
           // Generate new rules from headers
-          let ruleIdCounter = 1;
           let newRules = [];
+
+          // Reset mapping and counter
+          labelToRuleId = {};
+          nextRuleId = 1;
 
           // Process each header rule - using the list format
           listFormatHeaders.forEach((rule) => {
@@ -236,7 +239,7 @@ function updateRules(headers) {
               // Only create a rule if we have headers to add
               if (requestHeaders.length > 0) {
                 newRules.push({
-                  id: ruleIdCounter++,
+                  id: getRuleIdForLabel(rule.label), // Use integer id for DNR
                   priority: 1,
                   action: {
                     type: "modifyHeaders",
@@ -286,7 +289,7 @@ function updateRules(headers) {
               }
 
               newRules.push({
-                id: ruleIdCounter++,
+                id: getRuleIdForLabel(rule.label), // Use integer id for DNR
                 priority: 1,
                 action: {
                   type: "modifyHeaders",
@@ -492,17 +495,35 @@ function updateExtensionIcon(enabled) {
 // 2. Convert it to grayscale and reduce opacity to about 50-60%
 // 3. Save it as icon128_disabled.png in the images folder
 
-// log what url will be modified
-chrome.webRequest.onBeforeSendHeaders.addListener(
-  (details) => {
-    console.log(`===== URL: ${details.method} ${details.url}`);
+// Module-level state for MV3 service worker
+let _customHeaderRules = [];
+let _extensionEnabled = true;
 
-    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/BlockingResponse
-    return {};
-  },
-  { urls: ["<all_urls>"] },
-  ["requestHeaders"]
-);
+// Module-level mapping from label to integer id for DNR rules
+let labelToRuleId = {};
+let nextRuleId = 1;
 
-// Export any functions that might be needed by other modules
-// export { updateRules, clearAllRules };
+function getRuleIdForLabel(label) {
+  if (!labelToRuleId[label]) {
+    labelToRuleId[label] = nextRuleId++;
+  }
+  return labelToRuleId[label];
+}
+
+// Listen for updateRules and setExtensionState messages
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'updateRules') {
+    // Store the latest rules in memory
+    _customHeaderRules = message.headers || [];
+  } else if (message.action === 'setExtensionState') {
+    _extensionEnabled = message.enabled !== false;
+  }
+});
+
+// Intercept requests and inject headers
+// (Removed chrome.webRequest.onBeforeSendHeaders.addListener block - use declarativeNetRequest only)
+
+// Helper: wildcard pattern to RegExp
+function wildcardToRegExp(pattern) {
+  return new RegExp('^' + pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$');
+}
