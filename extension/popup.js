@@ -537,6 +537,66 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // --- Duplicate label check for customHeaders form ---
+  const headerLabelInput = document.getElementById('header-label');
+  const submitBtn = headerForm.querySelector('button[type="submit"]');
+  let lastDuplicateState = false;
+
+  // Ensure error border style exists
+  if (!document.getElementById('input-error-style')) {
+    const style = document.createElement('style');
+    style.id = 'input-error-style';
+    style.textContent = `.input-error { border: 2px solid #d32f2f !important; }`;
+    document.head.appendChild(style);
+  }
+
+  headerLabelInput.addEventListener('input', function () {
+    const label = headerLabelInput.value.trim();
+    chrome.storage.local.get('customHeaders', (data) => {
+      const headersArray = data.customHeaders || [];
+      let duplicate = false;
+      if (editingHeaderId) {
+        if (label !== editingHeaderId && headersArray.some(h => h.label === label)) {
+          duplicate = true;
+        }
+      } else {
+        if (headersArray.some(h => h.label === label)) {
+          duplicate = true;
+        }
+      }
+      let duplicateMsg = document.getElementById('duplicate-label-msg');
+      if (duplicate) {
+        if (!duplicateMsg) {
+          duplicateMsg = document.createElement('div');
+          duplicateMsg.id = 'duplicate-label-msg';
+          duplicateMsg.style.color = '#d32f2f';
+          duplicateMsg.style.fontSize = '13px';
+          duplicateMsg.style.marginTop = '2px';
+          headerLabelInput.parentNode.appendChild(duplicateMsg);
+        }
+        duplicateMsg.textContent = 'Label already exists';
+        headerLabelInput.classList.add('input-error');
+        submitBtn.disabled = true;
+        lastDuplicateState = true;
+      } else {
+        if (duplicateMsg) duplicateMsg.remove();
+        headerLabelInput.classList.remove('input-error');
+        submitBtn.disabled = false;
+        lastDuplicateState = false;
+      }
+    });
+  });
+
+  // Prevent form submit if duplicate label (extra guard)
+  headerForm.addEventListener('submit', (e) => {
+    if (lastDuplicateState) {
+      e.preventDefault();
+      headerLabelInput.focus();
+      return;
+    }
+    // ...existing code...
+  });
+
   // === Header Filtering ===
   const headerFilterInput = document.getElementById('header-filter-input');
   const headerFilterRadios = document.getElementsByName('header-filter-criteria');
