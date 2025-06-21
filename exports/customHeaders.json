@@ -1,7 +1,6 @@
 [
   {
     "active": true,
-    "id": "1750330132856",
     "label": "Catalog-Offers DEV",
     "urlPattern": "catalog-offers-ext.cp.api.dp.godaddy.com",
     "headers": {
@@ -13,7 +12,6 @@
   },
   {
     "active": true,
-    "id": "1750330132857",
     "label": "Catalog-Offers OTE",
     "urlPattern": "catalog-offers-ext.cp.api.ote.godaddy.com",
     "headers": {
@@ -25,7 +23,6 @@
   },
   {
     "active": true,
-    "id": "1750330132858",
     "label": "Catalog-Offers PROD",
     "urlPattern": "catalog-offers-ext.cp.api.prod.godaddy.com",
     "headers": {
@@ -37,7 +34,6 @@
   },
   {
     "active": true,
-    "id": "1750330132859",
     "label": "Catalog-Offers TEST",
     "urlPattern": "catalog-offers-ext.cp.api.test.godaddy.com",
     "headers": {
@@ -49,7 +45,6 @@
   },
   {
     "active": true,
-    "id": "1750426475011",
     "label": "Catalog-Offers-Availability DEV",
     "urlPattern": "catalog-offers-availability-ext.cp.api.dp.godaddy.com",
     "headers": {
@@ -61,7 +56,6 @@
   },
   {
     "active": true,
-    "id": "1750426538884",
     "label": "Catalog-Offers-Availability OTE",
     "urlPattern": "catalog-offers-availability-ext.cp.api.ote.godaddy.com",
     "headers": {
@@ -73,7 +67,6 @@
   },
   {
     "active": true,
-    "id": "1750426492488",
     "label": "Catalog-Offers-Availability PROD",
     "urlPattern": "catalog-offers-availability-ext.cp.api.prod.godaddy.com",
     "headers": {
@@ -85,7 +78,6 @@
   },
   {
     "active": true,
-    "id": "1750426522451",
     "label": "Catalog-Offers-Availability TEST",
     "urlPattern": "catalog-offers-availability-ext.cp.api.test.godaddy.com",
     "headers": {
@@ -97,7 +89,6 @@
   },
   {
     "active": true,
-    "id": "1750351755044",
     "label": "Catalog-Offers-Curated DEV",
     "urlPattern": "catalog-offers-curator-int.cp.api.dp.godaddy.com",
     "headers": {
@@ -109,7 +100,6 @@
   },
   {
     "active": true,
-    "id": "1750330132861",
     "label": "Catalog-Offers-Curated OTE",
     "urlPattern": "catalog-offers-curator-int.cp.api.ote.godaddy.com",
     "headers": {
@@ -121,7 +111,6 @@
   },
   {
     "active": true,
-    "id": "1750330132862",
     "label": "Catalog-Offers-Curated PROD",
     "urlPattern": "catalog-offers-curator-int.cp.api.prod.godaddy.com",
     "headers": {
@@ -133,7 +122,6 @@
   },
   {
     "active": true,
-    "id": "1750330132863",
     "label": "Catalog-Offers-Curated TEST",
     "urlPattern": "catalog-offers-curator-int.cp.api.test.godaddy.com",
     "headers": {
@@ -145,7 +133,6 @@
   },
   {
     "active": true,
-    "id": "1750330132864",
     "label": "Catalog-Products DEV",
     "urlPattern": "catalog-products-ext.cp.api.dp.godaddy.com",
     "headers": {
@@ -157,7 +144,6 @@
   },
   {
     "active": true,
-    "id": "1750330132865",
     "label": "Catalog-Products OTE",
     "urlPattern": "catalog-products-ext.cp.api.ote.godaddy.com",
     "headers": {
@@ -169,7 +155,6 @@
   },
   {
     "active": true,
-    "id": "1750330132866",
     "label": "Catalog-Products PROD",
     "urlPattern": "catalog-products-ext.cp.api.prod.godaddy.com",
     "headers": {
@@ -181,7 +166,6 @@
   },
   {
     "active": true,
-    "id": "1750330132867",
     "label": "Catalog-Products TEST",
     "urlPattern": "catalog-products-ext.cp.api.test.godaddy.com",
     "headers": {
@@ -193,7 +177,6 @@
   },
   {
     "active": true,
-    "id": "1750354375508",
     "label": "Catalog-Translation DEV",
     "urlPattern": "catalog-translation-int.cp.api.dp.godaddy.com",
     "headers": {
@@ -205,7 +188,6 @@
   },
   {
     "active": true,
-    "id": "1750354350954",
     "label": "Catalog-Translation OTE",
     "urlPattern": "catalog-translation-int.cp.api.ote.godaddy.com",
     "headers": {
@@ -217,7 +199,6 @@
   },
   {
     "active": true,
-    "id": "1750354335017",
     "label": "Catalog-Translation PROD",
     "urlPattern": "catalog-translation-int.cp.api.prod.godaddy.com",
     "headers": {
@@ -229,7 +210,6 @@
   },
   {
     "active": true,
-    "id": "1750354386734",
     "label": "Catalog-Translation TEST",
     "urlPattern": "catalog-translation-int.cp.api.test.godaddy.com",
     "headers": {
