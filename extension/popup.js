@@ -659,7 +659,7 @@ document.addEventListener("DOMContentLoaded", () => {
       headerItem.classList.add("header-disabled");
     }
     
-    headerItem.dataset.id = header.id;
+    headerItem.dataset.id = header.label;
 
     const labelDisplay = header.label
       ? `<div class="header-label">${escapeHtml(header.label)}</div>`
@@ -731,7 +731,7 @@ document.addEventListener("DOMContentLoaded", () => {
         proceedBtn.textContent = 'Proceed';
         proceedBtn.className = 'proceed-btn';
         proceedBtn.addEventListener('click', () => {
-          deleteHeader(header.id);
+          deleteHeader(header.label);
         });
         
         // Add buttons to the popup - Cancel first, then Proceed
@@ -745,13 +745,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Add edit button event listener
     headerItem.querySelector(".edit-btn").addEventListener("click", () => {
-      startEditing(header.id);
+      startEditing(header.label);
     });
     
     // Add checkbox event listener to toggle active state
     headerItem.querySelector(".header-checkbox").addEventListener("change", (e) => {
       const isActive = e.target.checked;
-      toggleHeaderActive(header.id, isActive);
+      toggleHeaderActive(header.label, isActive);
     });
 
     // Add event listener to URL pattern input to select all text when clicked
@@ -763,10 +763,10 @@ document.addEventListener("DOMContentLoaded", () => {
     headerList.appendChild(headerItem);
   }
 
-  function startEditing(id) {
+  function startEditing(label) {
     chrome.storage.local.get("customHeaders", (data) => {
       const headers = data.customHeaders || [];
-      const headerToEdit = headers.find((h) => h.id === id);
+      const headerToEdit = headers.find((h) => h.label === label);
 
       if (headerToEdit) {
         // Clear existing header entries
@@ -791,7 +791,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Set editing state
-        editingHeaderId = id;
+        editingHeaderId = label;
         document.querySelector('button[type="submit"]').textContent = "Update Rule";
         document.querySelector('.cancel-edit-btn').style.display = "inline-block";
         document.getElementById("create-new").style.display = "inline-block";
@@ -805,14 +805,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function updateHeader(id, label, urlPattern, headers) {
+  function updateHeader(label, newLabel, urlPattern, headers) {
     chrome.storage.local.get("customHeaders", (data) => {
       const headersArray = data.customHeaders || [];
 
       // Find and update the header
       const updatedHeaders = headersArray.map((h) => {
-        if (h.id === id) {
-          return { ...h, label, urlPattern, headers };
+        if (h.label === label) {
+          return { ...h, label: newLabel, urlPattern, headers };
         }
         return h;
       });
@@ -838,12 +838,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function deleteHeader(id) {
+  function deleteHeader(label) {
     chrome.storage.local.get("customHeaders", (data) => {
       const headers = data.customHeaders || [];
 
       // Filter out the header to delete
-      const updatedHeaders = headers.filter((h) => h.id !== id);
+      const updatedHeaders = headers.filter((h) => h.label !== label);
 
       // Update storage
       chrome.storage.local.set({ customHeaders: updatedHeaders }, () => {
@@ -853,7 +853,8 @@ document.addEventListener("DOMContentLoaded", () => {
           renderFilteredHeaders();
         } else {
           // If no filtering, just remove the deleted item from DOM
-          document.querySelector(`.header-item[data-id="${id}"]`).remove();
+          const headerItem = document.querySelector(`.header-item[data-id="${label}"]`);
+          if (headerItem) headerItem.remove();
         }
 
         // Update the rules
@@ -1239,13 +1240,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function toggleHeaderActive(id, isActive) {
+  function toggleHeaderActive(label, isActive) {
     chrome.storage.local.get("customHeaders", (data) => {
       const headers = data.customHeaders || [];
       
       // Find and update the header
       const updatedHeaders = headers.map(h => {
-        if (h.id === id) {
+        if (h.label === label) {
           return { ...h, active: isActive };
         }
         return h;
@@ -1259,7 +1260,7 @@ document.addEventListener("DOMContentLoaded", () => {
           renderFilteredHeaders();
         } else {
           // If no filtering, just update the class on the specific item
-          const headerItem = document.querySelector(`.header-item[data-id="${id}"]`);
+          const headerItem = document.querySelector(`.header-item[data-id="${label}"]`);
           if (headerItem) {
             if (isActive) {
               headerItem.classList.remove('header-disabled');
