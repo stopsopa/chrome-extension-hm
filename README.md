@@ -70,12 +70,8 @@ Please update [exports/customHeaders.json](exports/customHeaders.json) when you 
 
 (objects in json exports/customHeaders.json file are sorted by label so it should generate nice [git diff](https://github.com/gdcorp-ecomm/chrome-plugin-headers/commit/0ff5ec75e48407ca46fac3ca3eabbdecb36074b2))
 
-# Old quick video documentation
-
-[installation & tutorial](https://secureservernet-my.sharepoint.com/:v:/g/personal/sdzialowski_godaddy_com/EXP7Kg6OB2hCjHuRkfkR2CkBC7-y_EtsZf1GDhQH150J7w?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=vG3aPh)
-
-[export/import & better edit](https://secureservernet-my.sharepoint.com/:v:/g/personal/sdzialowski_godaddy_com/EcKPF4XKi4pHpHWrp5t8yJgBHYbEcKSpzw_S9989PNev2A?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=a5uFAk)
-
 # Dev note
 
 These [documents](documents) should stay in the repository. Those are important for the extension to be accepted by Chrome Web Store.
+
+https://developer.chrome.com/docs/webstore/publish
