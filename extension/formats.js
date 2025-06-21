@@ -4,7 +4,6 @@
 // [
 //   {
 //     "active": true,
-//     "id": "1749666089615",
 //     "label": "xxx DEV",
 //     "name": "Authorization",
 //     "urlPattern": "xxx.com",
@@ -13,7 +12,6 @@
 //   },
 //   {
 //     "active": true,
-//     "id": "1749666227080",
 //     "label": "xxx OTE",
 //     "name": "Authorization",
 //     "urlPattern": "xxx.com",
@@ -28,7 +26,6 @@
 // [
 //   {
 //     "active": true,
-//     "id": "1749666089615",
 //     "label": "xxx DEV",
 //     "urlPattern": "xxx.com",
 //     "headers": {
@@ -40,7 +37,6 @@
 //   },
 //   {
 //     "active": true,
-//     "id": "1749666227080",
 //     "label": "xxx OTE",
 //     "urlPattern": "xxx.com",
 //     "headers": {
@@ -59,7 +55,6 @@ export function toFlat(list) {
   return list.map((d, i) => {
     const n = {
       active: d.active || true,
-      id: d.id || getId(),
       label: d.label,
       urlPattern: d.urlPattern,
 
@@ -102,7 +97,6 @@ export function toList(list) {
   const newList = list.map((d, i) => {
     const n = {
       active: d.active || true,
-      id: d.id || getId(),
       label: d.label,
       urlPattern: d.urlPattern,
       headers: isObject(d.headers) ? d.headers : {},
@@ -131,14 +125,6 @@ export function toList(list) {
   });
 
   return newList;
-}
-
-let i = 0;
-export function resetId() {
-  i = 0;
-}
-function getId() {
-  return `id-${i++}`;
 }
 
 function isObject(o) {

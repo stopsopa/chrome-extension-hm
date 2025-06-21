@@ -1,15 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { toFlat, toList, resetId } from "../extension/formats.js";
+import { toFlat, toList } from "../extension/formats.js";
 
 test("no change", (t) => {
-  resetId();
-
   const result = toFlat([
     {
       active: true,
-      id: "id-xxx",
       label: "Test Header",
       urlPattern: "example.com",
       name: "X-Test-Header",
@@ -20,7 +17,6 @@ test("no change", (t) => {
   assert.deepEqual(result, [
     {
       active: true,
-      id: "id-xxx",
       label: "Test Header",
       urlPattern: "example.com",
       name: "X-Test-Header",
@@ -31,8 +27,6 @@ test("no change", (t) => {
 });
 
 test("synchronous passing test", (t) => {
-  resetId();
-
   const result = toFlat([
     {
       active: true,
@@ -43,7 +37,8 @@ test("synchronous passing test", (t) => {
           value: "test-value discarded",
           source: "dictionary discarded",
         },
-        Authorization: { // Authorization will be prioritized 
+        Authorization: {
+          // Authorization will be prioritized
           value: "test-value",
           source: "dictionary",
         },
@@ -54,7 +49,6 @@ test("synchronous passing test", (t) => {
   assert.deepEqual(result, [
     {
       active: true,
-      id: "id-0",
       label: "Test Header",
       urlPattern: "example.com",
       name: "Authorization",
@@ -68,12 +62,9 @@ test("synchronous passing test", (t) => {
 });
 
 test("toList no change", (t) => {
-  resetId();
-
   const result = toList([
     {
       active: true,
-      id: "id-xxx",
       label: "Test Header",
       urlPattern: "example.com",
       headers: {
@@ -88,7 +79,6 @@ test("toList no change", (t) => {
   assert.deepEqual(result, [
     {
       active: true,
-      id: "id-xxx",
       label: "Test Header",
       urlPattern: "example.com",
       headers: {
@@ -103,8 +93,6 @@ test("toList no change", (t) => {
 
 // test for toList function
 test("toList function test", (t) => {
-  resetId();
-
   const result = toList([
     {
       active: true,
@@ -119,7 +107,6 @@ test("toList function test", (t) => {
   assert.deepEqual(result, [
     {
       active: true,
-      id: "id-0",
       label: "Test Header",
       urlPattern: "example.com",
       headers: {
