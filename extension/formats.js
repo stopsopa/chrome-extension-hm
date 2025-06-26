@@ -8,7 +8,8 @@
 //     "name": "Authorization",
 //     "urlPattern": "xxx.com",
 //     "value": "dev",
-//     "valueSource": "dictionary"
+//     "valueSource": "dictionary",
+//     "first": true
 //   },
 //   {
 //     "active": true,
@@ -16,7 +17,8 @@
 //     "name": "Authorization",
 //     "urlPattern": "xxx.com",
 //     "value": "ote",
-//     "valueSource": "dictionary"
+//     "valueSource": "dictionary",
+//     "first": true
 //   },
 //   ...
 
@@ -31,7 +33,8 @@
 //     "headers": {
 //       "Authorization": {
 //         "value": "dev",
-//         "source": "dictionary"
+//         "source": "dictionary",
+//         "first": true
 //       }
 //     }
 //   },
@@ -42,7 +45,8 @@
 //     "headers": {
 //       "Authorization": {
 //         "value": "ote",
-//         "source": "dictionary"
+//         "source": "dictionary",
+//         "first": true
 //       }
 //     }
 //   },
@@ -61,32 +65,42 @@ export function toFlat(list) {
       value: d.value,
       name: d.name,
       valueSource: d.valueSource,
+      first: d.first,
     };
 
     if (typeof d.label !== "string") {
       throw new Error("Label must be a string - object index: " + i);
     }
 
-    if (typeof d.name !== "string") {
-      let firstKey = "Authorization";
+    let firstKey = n.name || "Authorization";
 
+    if (isObject(d?.headers)) {
       if (!d?.headers?.[firstKey]) {
         firstKey = Object.keys(d?.headers || {})[0];
       }
+    }
 
-      if (typeof firstKey !== "string") {
-        throw new Error("headers object have to have at least one key - object index: " + i);
-      }
+    if (typeof firstKey !== "string") {
+      throw new Error(
+        "headers object have to have at least one key - object index: " + i
+      );
+    }
 
-      n.name = firstKey;
+    n.name = firstKey;
 
-      if (typeof n.value !== "string") {
-        n.value = d?.headers?.[firstKey]?.value;
-      }
-
-      if (typeof n.valueSource !== "string") {
-        n.valueSource = d?.headers?.[firstKey]?.source;
-      }
+    if (typeof n.value !== "string") {
+      n.value = d?.headers?.[firstKey]?.value;
+    }
+    
+    if (typeof n.valueSource !== "string") {
+      n.valueSource = d?.headers?.[firstKey]?.source;
+    }
+    
+    if (typeof n.first !== "string") {
+      n.first =
+        typeof d?.headers?.[firstKey]?.first === "boolean"
+          ? d?.headers?.[firstKey]?.first
+          : true;
     }
 
     return n;
@@ -112,12 +126,15 @@ export function toList(list) {
       }
 
       if (typeof d.valueSource !== "string") {
-        throw new Error("toList valueSource must be a string - object index: " + i);
+        throw new Error(
+          "toList valueSource must be a string - object index: " + i
+        );
       }
 
       n.headers[d.name] = {
         value: d.value,
         source: d.valueSource,
+        first: typeof d.first === "boolean" ? d.first : true,
       };
     }
 

@@ -22,6 +22,7 @@ test("no change", (t) => {
       name: "X-Test-Header",
       value: "test-value",
       valueSource: "dictionary",
+      first: true,
     },
   ]);
 });
@@ -54,6 +55,7 @@ test("synchronous passing test", (t) => {
       name: "Authorization",
       value: "test-value",
       valueSource: "dictionary",
+      first: true,
     },
   ]);
 
@@ -101,6 +103,7 @@ test("toList function test", (t) => {
       name: "X-Test-Header",
       value: "test-value",
       valueSource: "dictionary",
+      first: false,
     },
   ]);
 
@@ -113,6 +116,7 @@ test("toList function test", (t) => {
         "X-Test-Header": {
           value: "test-value",
           source: "dictionary",
+          first: false,
         },
       },
     },
