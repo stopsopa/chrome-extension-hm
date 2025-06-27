@@ -99,31 +99,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const processedHeaders = headers.map((header) => {
         const processedHeader = { ...header };
 
-        // New structure handling
-        if (header.headers) {
-          processedHeader.resolvedHeaders = {};
+        processedHeader.resolvedHeaders = {};
 
-          for (const [headerName, headerConfig] of Object.entries(
-            header.headers
-          )) {
-            if (headerConfig.source === "dictionary") {
-              const dictValue = dictionaryMap[headerConfig.value];
-              processedHeader.resolvedHeaders[headerName] =
-                dictValue !== undefined ? dictValue : headerConfig.value;
-            } else {
-              processedHeader.resolvedHeaders[headerName] = headerConfig.value;
-            }
-          }
-        }
-        // Legacy structure handling
-        else if (header.valueSource === "dictionary") {
-          if (dictionaryMap[header.value]) {
-            processedHeader.resolvedValue = dictionaryMap[header.value];
+        for (const [headerName, headerConfig] of Object.entries(header.headers)) {
+          if (headerConfig.source === "dictionary") {
+            const dictValue = dictionaryMap[headerConfig.value];
+            processedHeader.resolvedHeaders[headerName] = dictValue !== undefined ? dictValue : headerConfig.value;
           } else {
-            processedHeader.resolvedValue = header.value;
+            processedHeader.resolvedHeaders[headerName] = headerConfig.value;
           }
-        } else {
-          processedHeader.resolvedValue = header.value;
         }
 
         return processedHeader;
@@ -136,9 +120,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       processedHeaders.forEach((header) => {
         if (header.active && header.resolvedHeaders) {
           // Check if this rule matches the current URL (simplified matching)
-          for (const [headerName, value] of Object.entries(
-            header.resolvedHeaders
-          )) {
+          for (const [headerName, value] of Object.entries(header.resolvedHeaders)) {
             // Include ONLY headers with first: false for Ajax overriding
             const headerConfig = header.headers[headerName];
             if (headerConfig.first === false) {
@@ -146,6 +128,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 value: value,
                 urlPattern: header.urlPattern, // Include URL pattern for matching
                 first: false,
+                regex: headerConfig.regex,
               };
             }
           }
@@ -243,9 +226,7 @@ function updateRules(headers) {
               const requestHeaders = [];
 
               // Process each header in the rule
-              for (const [headerName, headerConfig] of Object.entries(
-                rule.headers
-              )) {
+              for (const [headerName, headerConfig] of Object.entries(rule.headers)) {
                 // ONLY process headers with first: true (or undefined/true by default)
                 if (headerConfig.first === false) {
                   continue; // Skip headers with first: false - these will be handled by Ajax override
@@ -384,11 +365,7 @@ function updateRules(headers) {
                 const headerObj = rule.action.requestHeaders[j];
 
                 // Check for missing or invalid header name
-                if (
-                  !headerObj.header ||
-                  typeof headerObj.header !== "string" ||
-                  headerObj.header.trim() === ""
-                ) {
+                if (!headerObj.header || typeof headerObj.header !== "string" || headerObj.header.trim() === "") {
                   isValid = false;
                   break;
                 }
@@ -444,54 +421,44 @@ function updateRules(headers) {
                   const idMatch = errorInfo.message.match(/Rule with id (\d+)/);
                   if (idMatch && idMatch[1]) {
                     const problemRuleId = parseInt(idMatch[1]);
-                    const problemRule = newRules.find(
-                      (r) => r.id === problemRuleId
-                    );
+                    const problemRule = newRules.find((r) => r.id === problemRuleId);
 
                     if (problemRule) {
                       // Try to fix the problem in storage
                       chrome.storage.local.get("customHeaders", (data) => {
-                        if (
-                          data.customHeaders &&
-                          Array.isArray(data.customHeaders)
-                        ) {
+                        if (data.customHeaders && Array.isArray(data.customHeaders)) {
                           let fixedAny = false;
 
                           // Fix any headers with spaces in the stored data
-                          const fixedHeaders = data.customHeaders.map(
-                            (rule) => {
-                              if (rule.headers) {
-                                const fixedHeadersObj = {};
-                                let madeChanges = false;
+                          const fixedHeaders = data.customHeaders.map((rule) => {
+                            if (rule.headers) {
+                              const fixedHeadersObj = {};
+                              let madeChanges = false;
 
-                                // Check each header name for spaces
-                                for (const [
-                                  headerName,
-                                  headerConfig,
-                                ] of Object.entries(rule.headers)) {
-                                  if (headerName.includes(" ")) {
-                                    // Use only the part before the space
-                                    const fixedName = headerName.split(" ")[0];
-                                    fixedHeadersObj[fixedName] = headerConfig;
-                                    madeChanges = true;
-                                    fixedAny = true;
-                                  } else {
-                                    fixedHeadersObj[headerName] = headerConfig;
-                                  }
+                              // Check each header name for spaces
+                              for (const [headerName, headerConfig] of Object.entries(rule.headers)) {
+                                if (headerName.includes(" ")) {
+                                  // Use only the part before the space
+                                  const fixedName = headerName.split(" ")[0];
+                                  fixedHeadersObj[fixedName] = headerConfig;
+                                  madeChanges = true;
+                                  fixedAny = true;
+                                } else {
+                                  fixedHeadersObj[headerName] = headerConfig;
                                 }
-
-                                if (madeChanges) {
-                                  return { ...rule, headers: fixedHeadersObj };
-                                }
-                              } else if (rule.name && rule.name.includes(" ")) {
-                                // Fix legacy format headers with spaces
-                                const fixedName = rule.name.split(" ")[0];
-                                fixedAny = true;
-                                return { ...rule, name: fixedName };
                               }
-                              return rule;
+
+                              if (madeChanges) {
+                                return { ...rule, headers: fixedHeadersObj };
+                              }
+                            } else if (rule.name && rule.name.includes(" ")) {
+                              // Fix legacy format headers with spaces
+                              const fixedName = rule.name.split(" ")[0];
+                              fixedAny = true;
+                              return { ...rule, name: fixedName };
                             }
-                          );
+                            return rule;
+                          });
 
                           // Save the fixed headers back to storage
                           if (fixedAny) {
@@ -544,9 +511,7 @@ function updateExtensionIcon(enabled) {
   chrome.action.setIcon({ path: iconPath });
 
   // Also update the tooltip
-  const title = enabled
-    ? "Request Header Modifier (Enabled)"
-    : "Request Header Modifier (Disabled)";
+  const title = enabled ? "Request Header Modifier (Enabled)" : "Request Header Modifier (Disabled)";
   chrome.action.setTitle({ title: title });
 }
 
@@ -586,9 +551,5 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Helper: wildcard pattern to RegExp
 function wildcardToRegExp(pattern) {
-  return new RegExp(
-    "^" +
-      pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*") +
-      "$"
-  );
+  return new RegExp("^" + pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*") + "$");
 }

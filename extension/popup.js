@@ -6,27 +6,22 @@ document.addEventListener("DOMContentLoaded", () => {
   let filterField = "label";
 
   // Load saved filter state
-  chrome.storage.local.get(
-    ["headerFilterValue", "headerFilterField"],
-    (data) => {
-      if (data.headerFilterValue) {
-        filterValue = data.headerFilterValue;
-        document.getElementById("header-filter-input").value = filterValue;
-      }
-
-      if (data.headerFilterField) {
-        filterField = data.headerFilterField;
-        document.querySelector(
-          `input[name="header-filter-criteria"][value="${filterField}"]`
-        ).checked = true;
-      }
-
-      // If we have a saved filter, apply it immediately
-      if (filterValue) {
-        renderFilteredHeaders();
-      }
+  chrome.storage.local.get(["headerFilterValue", "headerFilterField"], (data) => {
+    if (data.headerFilterValue) {
+      filterValue = data.headerFilterValue;
+      document.getElementById("header-filter-input").value = filterValue;
     }
-  );
+
+    if (data.headerFilterField) {
+      filterField = data.headerFilterField;
+      document.querySelector(`input[name="header-filter-criteria"][value="${filterField}"]`).checked = true;
+    }
+
+    // If we have a saved filter, apply it immediately
+    if (filterValue) {
+      renderFilteredHeaders();
+    }
+  });
 
   // Tab handling
   const tabs = document.querySelectorAll(".tab");
@@ -55,18 +50,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Function to add a new header entry
-  function addHeaderEntry(
-    headerName = "",
-    headerValue = "",
-    valueSource = "manual",
-    isFirst = true
-  ) {
+  function addHeaderEntry(headerName = "", headerValue = "", valueSource = "manual", isFirst = true, regex = null) {
     const container = document.getElementById("header-entries-container");
     const index = headerEntryCounter++;
 
     const headerEntry = document.createElement("div");
     headerEntry.className = "header-entry";
     headerEntry.dataset.index = index;
+    
 
     headerEntry.innerHTML = `
       <button type="button" class="remove-header-btn" title="Remove this header">&#9851;&#65039;</button>
@@ -92,18 +83,14 @@ document.addEventListener("DOMContentLoaded", () => {
         </label>
       </div>
 
-      <div class="form-group value-source-manual" ${
-        valueSource === "dictionary" ? 'style="display: none"' : ""
-      }>
+      <div class="form-group value-source-manual" ${valueSource === "dictionary" ? 'style="display: none"' : ""}>
         <label for="header-value-${index}">Header Value:</label>
         <input type="text" id="header-value-${index}" class="header-value" placeholder="CustomValue" ${
       valueSource === "manual" ? "required" : ""
     } value="${valueSource === "manual" ? escapeHtml(headerValue) : ""}" />
       </div>
 
-      <div class="form-group value-source-dictionary" ${
-        valueSource === "manual" ? 'style="display: none"' : ""
-      }>
+      <div class="form-group value-source-dictionary" ${valueSource === "manual" ? 'style="display: none"' : ""}>
         <label for="header-value-key-${index}">Select Value:</label>
         <select id="header-value-key-${index}" class="header-value-key" ${
       valueSource === "dictionary" ? "required" : ""
@@ -114,13 +101,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
       <div class="form-group header-first-group">
         <label class="checkbox-label">
-          <input type="checkbox" class="header-first-checkbox" ${
-            isFirst ? "checked" : ""
-          } /> Mark as first header
+          <input type="checkbox" class="header-first-checkbox" ${isFirst ? "checked" : ""} /> Initial HTML Request
           <span class="tooltip">
             <span style="font-size: 12px; color: #4285f4; text-decoration: underline">?</span>
             <span class="tooltiptext">When checked, this header will be sent before other headers</span>
           </span>
+        </label>
+      </div>
+      
+      <div class="form-group header-regex-group" ${isFirst ? 'style="display: none"' : ""}>
+        <label for="header-regex-${index}">URL Regex Filter:
+        
+        <span class="tooltip">
+          <span style="font-size: 12px; color: #4285f4; text-decoration: underline">?</span>
+          <span class="tooltiptext">If above tickbox is off it means this header will be added only to ajax and fetch requests. but
+                    only when matches this regex</span>
+        </span>
+        <input type="text" id="header-regex-${index}" class="header-regex" placeholder="/^(?!.*\/swagger-config)(?!.*\/v3\/api-docs).*$/" value="${
+      regex ? escapeHtml(regex) : ""
+    }" />
         </label>
       </div>
     `;
@@ -128,18 +127,14 @@ document.addEventListener("DOMContentLoaded", () => {
     container.appendChild(headerEntry);
 
     // Add event listener for remove button
-    headerEntry
-      .querySelector(".remove-header-btn")
-      .addEventListener("click", function () {
-        headerEntry.remove();
-      });
+    headerEntry.querySelector(".remove-header-btn").addEventListener("click", function () {
+      headerEntry.remove();
+    });
 
     // Add event listeners for value source radio buttons
     const valueSourceRadios = headerEntry.querySelectorAll(".value-source");
     const manualInputGroup = headerEntry.querySelector(".value-source-manual");
-    const dictionaryInputGroup = headerEntry.querySelector(
-      ".value-source-dictionary"
-    );
+    const dictionaryInputGroup = headerEntry.querySelector(".value-source-dictionary");
 
     valueSourceRadios.forEach((radio) => {
       radio.addEventListener("change", function () {
@@ -159,10 +154,21 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
+    // Add event listener for first checkbox to toggle regex visibility
+    const firstCheckbox = headerEntry.querySelector(".header-first-checkbox");
+    const regexGroup = headerEntry.querySelector(".header-regex-group");
+
+    firstCheckbox.addEventListener("change", function () {
+      if (this.checked) {
+        regexGroup.style.display = "none";
+        headerEntry.querySelector(".header-regex").value = ""; // Clear regex when hidden
+      } else {
+        regexGroup.style.display = "block";
+      }
+    });
+
     // Update the dictionary dropdown
-    updateDictionaryDropdownInEntry(
-      headerEntry.querySelector(".header-value-key")
-    );
+    updateDictionaryDropdownInEntry(headerEntry.querySelector(".header-value-key"));
 
     // If it's from the dictionary, select the right value
     if (valueSource === "dictionary") {
@@ -181,16 +187,12 @@ document.addEventListener("DOMContentLoaded", () => {
   setupInitialHeaderEntry();
 
   function setupInitialHeaderEntry() {
-    const initialEntry = document.querySelector(
-      '.header-entry[data-index="0"]'
-    );
+    const initialEntry = document.querySelector('.header-entry[data-index="0"]');
     if (!initialEntry) return;
 
     const valueSourceRadios = initialEntry.querySelectorAll(".value-source");
     const manualInputGroup = initialEntry.querySelector(".value-source-manual");
-    const dictionaryInputGroup = initialEntry.querySelector(
-      ".value-source-dictionary"
-    );
+    const dictionaryInputGroup = initialEntry.querySelector(".value-source-dictionary");
 
     // Make sure required attributes are set correctly on initial load
     initialEntry.querySelector(".header-value").required = true;
@@ -215,17 +217,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Add remove button handler
-    initialEntry
-      .querySelector(".remove-header-btn")
-      .addEventListener("click", function () {
-        // Don't allow removing the last header entry
-        const entries = document.querySelectorAll(".header-entry");
-        if (entries.length <= 1) {
-          alert("You need at least one header entry.");
-          return;
-        }
-        initialEntry.remove();
-      });
+    initialEntry.querySelector(".remove-header-btn").addEventListener("click", function () {
+      // Don't allow removing the last header entry
+      const entries = document.querySelectorAll(".header-entry");
+      if (entries.length <= 1) {
+        alert("You need at least one header entry.");
+        return;
+      }
+      initialEntry.remove();
+    });
   }
 
   // Get form and list elements
@@ -248,8 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Get input values
     const headerLabel = document.getElementById("header-label").value.trim();
-    const urlPattern =
-      document.getElementById("url-pattern").value.trim() || "*";
+    const urlPattern = document.getElementById("url-pattern").value.trim() || "*";
 
     // Get all header entries
     const headerEntries = document.querySelectorAll(".header-entry");
@@ -279,10 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // Validate required fields
-      if (
-        (valueSource === "manual" && !headerValue) ||
-        (valueSource === "dictionary" && !headerValue)
-      ) {
+      if ((valueSource === "manual" && !headerValue) || (valueSource === "dictionary" && !headerValue)) {
         alert(`Please fill in all required fields for header "${headerName}".`);
         return;
       }
@@ -290,12 +286,26 @@ document.addEventListener("DOMContentLoaded", () => {
       // Get the "first" flag value
       const isFirst = entry.querySelector(".header-first-checkbox").checked;
 
+      // Get the regex value if first is false
+      let regex = null;
+      if (!isFirst) {
+        const regexValue = entry.querySelector(".header-regex").value.trim();
+        if (regexValue) {
+          regex = regexValue;
+        }
+      }
+
       // Add to headers object
       headers[headerName] = {
         value: headerValue,
         source: valueSource,
         first: isFirst,
       };
+
+      // Only add regex if it has a value and first is false
+      if (regex !== null) {
+        headers[headerName].regex = regex;
+      }
     }
 
     if (editingHeaderId) {
@@ -345,8 +355,7 @@ document.addEventListener("DOMContentLoaded", () => {
       updateDictionaryEntry(editingDictId, dictKey, dictValue);
       // Reset editing state
       editingDictId = null;
-      dictionaryForm.querySelector('button[type="submit"]').textContent =
-        "Add Dictionary Entry";
+      dictionaryForm.querySelector('button[type="submit"]').textContent = "Add Dictionary Entry";
     } else {
       // Add new dictionary entry
       addDictionaryEntry(dictKey, dictValue);
@@ -409,8 +418,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Get current form values
     const headerLabel = document.getElementById("header-label").value.trim();
-    const urlPattern =
-      document.getElementById("url-pattern").value.trim() || "*";
+    const urlPattern = document.getElementById("url-pattern").value.trim() || "*";
 
     // Get all header entries
     const headerEntries = document.querySelectorAll(".header-entry");
@@ -434,10 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // Validate required fields
-      if (
-        (valueSource === "manual" && !headerValue) ||
-        (valueSource === "dictionary" && !headerValue)
-      ) {
+      if ((valueSource === "manual" && !headerValue) || (valueSource === "dictionary" && !headerValue)) {
         alert(`Please fill in all required fields for header "${headerName}".`);
         return;
       }
@@ -495,8 +500,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Reset editing state but keep form values
         editingHeaderId = null;
-        document.querySelector('button[type="submit"]').textContent =
-          "Add Rule";
+        document.querySelector('button[type="submit"]').textContent = "Add Rule";
         document.querySelector(".cancel-edit-btn").style.display = "none";
         createNewButton.style.display = "none";
       });
@@ -550,8 +554,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const headers = data.customHeaders || [];
 
       // Check if we need to migrate the data structure
-      const needsMigration =
-        headers.length > 0 && headers[0].name !== undefined;
+      const needsMigration = headers.length > 0 && headers[0].name !== undefined;
 
       if (needsMigration) {
         // Migrate old format to new format
@@ -615,10 +618,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const headersArray = data.customHeaders || [];
       let duplicate = false;
       if (editingHeaderId) {
-        if (
-          label !== editingHeaderId &&
-          headersArray.some((h) => h.label === label)
-        ) {
+        if (label !== editingHeaderId && headersArray.some((h) => h.label === label)) {
           duplicate = true;
         }
       } else {
@@ -661,9 +661,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // === Header Filtering ===
   const headerFilterInput = document.getElementById("header-filter-input");
-  const headerFilterRadios = document.getElementsByName(
-    "header-filter-criteria"
-  );
+  const headerFilterRadios = document.getElementsByName("header-filter-criteria");
   const clearFilterBtn = document.getElementById("clear-filter-btn");
 
   // Show/hide clear button based on input value
@@ -716,9 +714,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return Object.keys(h.headers || {}).some((headerName) => {
               return (
                 headerName.toLowerCase().includes(filterValue) ||
-                (h.headers[headerName].value || "")
-                  .toLowerCase()
-                  .includes(filterValue)
+                (h.headers[headerName].value || "").toLowerCase().includes(filterValue)
               );
             });
           }
@@ -792,9 +788,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     headerItem.dataset.id = header.label;
 
-    const labelDisplay = header.label
-      ? `<div class="header-label">${escapeHtml(header.label)}</div>`
-      : "";
+    const labelDisplay = header.label ? `<div class="header-label">${escapeHtml(header.label)}</div>` : "";
 
     // Create the headers list display
     let headersListHtml = "";
@@ -805,21 +799,23 @@ document.addEventListener("DOMContentLoaded", () => {
       for (const [headerName, headerConfig] of Object.entries(header.headers)) {
         const valueSource = headerConfig.source || "manual";
         const value = headerConfig.value || "";
+        const regex = headerConfig.regex || "";
 
         const valueDisplay =
-          valueSource === "dictionary"
-            ? `(from dictionary) ${escapeHtml(value)}`
-            : escapeHtml(value);
+          valueSource === "dictionary" ? `(from dictionary) ${escapeHtml(value)}` : escapeHtml(value);
 
         headersListHtml += `
           
-            <div><b>${escapeHtml(
-              headerName
-            )}:</b> ${valueDisplay}
+            <div><b>${escapeHtml(headerName)}:</b> ${valueDisplay}
             ${
               headerConfig.first !== false
                 ? '<span style="color: #4caf50; font-size: 10px; margin-left: 5px;">(first)</span>'
                 : '<span style="color:rgb(175, 111, 76); font-size: 10px; margin-left: 5px;">(skip first)</span>'
+            }
+            ${
+              regex
+                ? `<span style="color:#2196f3; font-size: 10px; margin-left: 5px;">regex: ${escapeHtml(regex)}</span>`
+                : ""
             }
             </div>
           
@@ -893,12 +889,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Add checkbox event listener to toggle active state
-    headerItem
-      .querySelector(".header-checkbox")
-      .addEventListener("change", (e) => {
-        const isActive = e.target.checked;
-        toggleHeaderActive(header.label, isActive);
-      });
+    headerItem.querySelector(".header-checkbox").addEventListener("change", (e) => {
+      const isActive = e.target.checked;
+      toggleHeaderActive(header.label, isActive);
+    });
 
     // Add event listener to URL pattern input to select all text when clicked
     const urlPatternInput = headerItem.querySelector(".url-pattern-input");
@@ -920,24 +914,18 @@ document.addEventListener("DOMContentLoaded", () => {
         headerEntryCounter = 0;
 
         // Populate the form with the header data
-        document.getElementById("header-label").value =
-          headerToEdit.label || "";
-        document.getElementById("url-pattern").value =
-          headerToEdit.urlPattern || "*";
+        document.getElementById("header-label").value = headerToEdit.label || "";
+        document.getElementById("url-pattern").value = headerToEdit.urlPattern || "*";
 
         // Create header entries for each header
-        if (
-          headerToEdit.headers &&
-          Object.keys(headerToEdit.headers).length > 0
-        ) {
-          for (const [headerName, headerConfig] of Object.entries(
-            headerToEdit.headers
-          )) {
+        if (headerToEdit.headers && Object.keys(headerToEdit.headers).length > 0) {
+          for (const [headerName, headerConfig] of Object.entries(headerToEdit.headers)) {
             const valueSource = headerConfig.source || "manual";
             const value = headerConfig.value || "";
             const isFirst = headerConfig.first !== false; // Default to true if not defined
+            const regex = headerConfig.regex || null;
 
-            addHeaderEntry(headerName, value, valueSource, isFirst);
+            addHeaderEntry(headerName, value, valueSource, isFirst, regex);
           }
         } else {
           // Add a default empty header entry if none exists
@@ -946,10 +934,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Set editing state
         editingHeaderId = label;
-        document.querySelector('button[type="submit"]').textContent =
-          "Update Rule";
-        document.querySelector(".cancel-edit-btn").style.display =
-          "inline-block";
+        document.querySelector('button[type="submit"]').textContent = "Update Rule";
+        document.querySelector(".cancel-edit-btn").style.display = "inline-block";
         document.getElementById("create-new").style.display = "inline-block";
 
         // Scroll to top of the page to show the form
@@ -1009,9 +995,7 @@ document.addEventListener("DOMContentLoaded", () => {
           renderFilteredHeaders();
         } else {
           // If no filtering, just remove the deleted item from DOM
-          const headerItem = document.querySelector(
-            `.header-item[data-id="${label}"]`
-          );
+          const headerItem = document.querySelector(`.header-item[data-id="${label}"]`);
           if (headerItem) headerItem.remove();
         }
 
@@ -1071,50 +1055,46 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
 
     // Add delete button event listener
-    dictionaryItem
-      .querySelector(".delete-btn")
-      .addEventListener("click", (e) => {
-        const deleteBtn = e.target;
+    dictionaryItem.querySelector(".delete-btn").addEventListener("click", (e) => {
+      const deleteBtn = e.target;
 
-        // Create a confirmation popup if it doesn't exist
-        let confirmationPopup = dictionaryItem.querySelector(
-          ".delete-confirmation"
-        );
+      // Create a confirmation popup if it doesn't exist
+      let confirmationPopup = dictionaryItem.querySelector(".delete-confirmation");
 
-        if (!confirmationPopup) {
-          // Hide the delete button temporarily
-          deleteBtn.style.display = "none";
+      if (!confirmationPopup) {
+        // Hide the delete button temporarily
+        deleteBtn.style.display = "none";
 
-          // Create a confirmation popup
-          confirmationPopup = document.createElement("div");
-          confirmationPopup.className = "delete-confirmation";
+        // Create a confirmation popup
+        confirmationPopup = document.createElement("div");
+        confirmationPopup.className = "delete-confirmation";
 
-          // Create "Cancel" button
-          const cancelBtn = document.createElement("button");
-          cancelBtn.textContent = "Cancel";
-          cancelBtn.className = "cancel-btn";
-          cancelBtn.addEventListener("click", () => {
-            // Remove the confirmation popup and show the delete button again
-            confirmationPopup.remove();
-            deleteBtn.style.display = "block";
-          });
+        // Create "Cancel" button
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "cancel-btn";
+        cancelBtn.addEventListener("click", () => {
+          // Remove the confirmation popup and show the delete button again
+          confirmationPopup.remove();
+          deleteBtn.style.display = "block";
+        });
 
-          // Create "Proceed" button
-          const proceedBtn = document.createElement("button");
-          proceedBtn.textContent = "Proceed";
-          proceedBtn.className = "proceed-btn";
-          proceedBtn.addEventListener("click", () => {
-            deleteDictionaryEntry(entry.id);
-          });
+        // Create "Proceed" button
+        const proceedBtn = document.createElement("button");
+        proceedBtn.textContent = "Proceed";
+        proceedBtn.className = "proceed-btn";
+        proceedBtn.addEventListener("click", () => {
+          deleteDictionaryEntry(entry.id);
+        });
 
-          // Add buttons to the popup
-          confirmationPopup.appendChild(cancelBtn);
-          confirmationPopup.appendChild(proceedBtn);
+        // Add buttons to the popup
+        confirmationPopup.appendChild(cancelBtn);
+        confirmationPopup.appendChild(proceedBtn);
 
-          // Add the popup to the dictionary item
-          dictionaryItem.appendChild(confirmationPopup);
-        }
-      });
+        // Add the popup to the dictionary item
+        dictionaryItem.appendChild(confirmationPopup);
+      }
+    });
 
     // Add edit button event listener
     dictionaryItem.querySelector(".edit-btn").addEventListener("click", () => {
@@ -1136,8 +1116,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Set editing state
         editingDictId = id;
-        dictionaryForm.querySelector('button[type="submit"]').textContent =
-          "Update Dictionary Entry";
+        dictionaryForm.querySelector('button[type="submit"]').textContent = "Update Dictionary Entry";
 
         // Scroll to top of the page to show the form
         window.scrollTo(0, 0);
@@ -1163,9 +1142,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!h.headers) return false;
 
         return Object.values(h.headers).some(
-          (headerConfig) =>
-            headerConfig.source === "dictionary" &&
-            headerConfig.value === oldKey
+          (headerConfig) => headerConfig.source === "dictionary" && headerConfig.value === oldKey
         );
       });
 
@@ -1217,9 +1194,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!h.headers) return false;
 
         return Object.values(h.headers).some(
-          (headerConfig) =>
-            headerConfig.source === "dictionary" &&
-            headerConfig.value === entryToDelete.key
+          (headerConfig) => headerConfig.source === "dictionary" && headerConfig.value === entryToDelete.key
         );
       });
 
@@ -1310,10 +1285,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Check each header in the rule
         for (const [headerName, headerConfig] of Object.entries(rule.headers)) {
-          if (
-            headerConfig.source === "dictionary" &&
-            headerConfig.value === oldKey
-          ) {
+          if (headerConfig.source === "dictionary" && headerConfig.value === oldKey) {
             updatedHeaders[headerName] = { ...headerConfig, value: newKey };
             changed = true;
           } else {
@@ -1327,11 +1299,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Save updated headers
       chrome.storage.local.set({ customHeaders: updatedHeaders }, () => {
         // Refresh header list if we're on that tab
-        if (
-          document
-            .querySelector('.tab[data-tab="headers"]')
-            .classList.contains("active")
-        ) {
+        if (document.querySelector('.tab[data-tab="headers"]').classList.contains("active")) {
           headerList.innerHTML = "";
           updatedHeaders.forEach(displayHeader);
         }
@@ -1378,13 +1346,10 @@ document.addEventListener("DOMContentLoaded", () => {
             // Create resolved headers for the background script
             processedRule.resolvedHeaders = {};
 
-            for (const [headerName, headerConfig] of Object.entries(
-              processedRule.headers
-            )) {
+            for (const [headerName, headerConfig] of Object.entries(processedRule.headers)) {
               if (headerConfig.source === "dictionary") {
                 const dictValue = dictionaryMap[headerConfig.value];
-                processedRule.resolvedHeaders[headerName] =
-                  dictValue !== undefined ? dictValue : headerConfig.value;
+                processedRule.resolvedHeaders[headerName] = dictValue !== undefined ? dictValue : headerConfig.value;
               } else {
                 processedRule.resolvedHeaders[headerName] = headerConfig.value;
               }
@@ -1393,9 +1358,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Legacy format compatibility
             processedRule.resolvedHeaders = {
               [rule.name]:
-                rule.valueSource === "dictionary" && dictionaryMap[rule.value]
-                  ? dictionaryMap[rule.value]
-                  : rule.value,
+                rule.valueSource === "dictionary" && dictionaryMap[rule.value] ? dictionaryMap[rule.value] : rule.value,
             };
           }
 
@@ -1431,9 +1394,7 @@ document.addEventListener("DOMContentLoaded", () => {
           renderFilteredHeaders();
         } else {
           // If no filtering, just update the class on the specific item
-          const headerItem = document.querySelector(
-            `.header-item[data-id="${label}"]`
-          );
+          const headerItem = document.querySelector(`.header-item[data-id="${label}"]`);
           if (headerItem) {
             if (isActive) {
               headerItem.classList.remove("header-disabled");
@@ -1458,37 +1419,29 @@ document.addEventListener("DOMContentLoaded", () => {
     // Default to enabled if not set
     const enabled = data.extensionEnabled !== false;
     extensionToggle.checked = enabled;
-    toggleLabel.textContent = enabled
-      ? "Extension Enabled"
-      : "Extension Disabled";
+    toggleLabel.textContent = enabled ? "Extension Enabled" : "Extension Disabled";
 
     // Update UI based on state
     if (!enabled) {
-      document
-        .querySelectorAll("form, .header-list, .dictionary-list")
-        .forEach((el) => {
-          el.style.opacity = "0.5";
-          el.style.pointerEvents = "none";
-        });
+      document.querySelectorAll("form, .header-list, .dictionary-list").forEach((el) => {
+        el.style.opacity = "0.5";
+        el.style.pointerEvents = "none";
+      });
     }
   });
 
   // Handle toggle changes
   extensionToggle.addEventListener("change", () => {
     const enabled = extensionToggle.checked;
-    toggleLabel.textContent = enabled
-      ? "Extension Enabled"
-      : "Extension Disabled";
+    toggleLabel.textContent = enabled ? "Extension Enabled" : "Extension Disabled";
 
     // Save state
     chrome.storage.local.set({ extensionEnabled: enabled }, () => {
       // Update UI
-      document
-        .querySelectorAll("form, .header-list, .dictionary-list")
-        .forEach((el) => {
-          el.style.opacity = enabled ? "1" : "0.5";
-          el.style.pointerEvents = enabled ? "auto" : "none";
-        });
+      document.querySelectorAll("form, .header-list, .dictionary-list").forEach((el) => {
+        el.style.opacity = enabled ? "1" : "0.5";
+        el.style.pointerEvents = enabled ? "auto" : "none";
+      });
 
       // Notify background script about the state change
       chrome.runtime.sendMessage({
@@ -1505,29 +1458,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const importAddFile = document.getElementById("import-headers-add-file");
 
   exportBtn.addEventListener("click", () => {
-    chrome.runtime.sendMessage(
-      { action: "exportCustomHeaders" },
-      (response) => {
-        if (response && response.json) {
-          const blob = new Blob([response.json], { type: "application/json" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download =
-            new Date()
-              .toISOString()
-              .substring(0, 19)
-              .replace("T", "_")
-              .replace(/:/g, "-") + "_customHeaders.json";
-          document.body.appendChild(a);
-          a.click();
-          setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          }, 100);
-        }
+    chrome.runtime.sendMessage({ action: "exportCustomHeaders" }, (response) => {
+      if (response && response.json) {
+        const blob = new Blob([response.json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download =
+          new Date().toISOString().substring(0, 19).replace("T", "_").replace(/:/g, "-") + "_customHeaders.json";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
       }
-    );
+    });
   });
 
   clearBtn.addEventListener("click", () => {

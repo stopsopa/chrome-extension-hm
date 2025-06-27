@@ -26,8 +26,29 @@ function createAjaxOverrider() {
         originalOpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function (method, url) {
           originalOpen.apply(this, arguments);
+
+          // Apply headers that match the URL regex or have no regex
           Object.keys(headers).forEach((key) => {
-            this.setRequestHeader(key, headers[key]);
+            const headerConfig = headers[key];
+            let shouldApply = true;
+
+            // Check if there's a regex to test against
+            if (headerConfig.regex) {
+              try {
+                shouldApply = headerConfig.regex.test(`${method}:${url}`);
+              } catch (err) {
+                console.error(`Error testing regex for header "${key}":`, err);
+                shouldApply = false;
+              }
+            }
+
+            if (shouldApply) {
+              this.setRequestHeader(key, headerConfig.value);
+            } else {
+              console.log(
+                `Not injecting header '${key}' into url '${method}:${url}' due to regex ${headerConfig.regex}`
+              );
+            }
           });
         };
         XMLHttpRequest.prototype.originalOpen = originalOpen;
@@ -64,12 +85,43 @@ function createFetchOverrider() {
         }
         originalFetch = window.fetch;
         window.fetch = function (url, options = {}) {
-          // Merge custom headers with existing headers
+          // Start with empty custom headers that we'll fill based on regex matching
+          const applicableHeaders = {};
+
+          // Get the method from options, default to "GET"
+          const method = options?.method || "GET";
+
+          // Check each header against URL to see if it should be applied
+          Object.keys(headers).forEach((key) => {
+            const headerConfig = headers[key];
+            let shouldApply = true;
+
+            // Check if there's a regex to test against
+            if (headerConfig.regex) {
+              try {
+                shouldApply = headerConfig.regex.test(`${method}:${url}`);
+              } catch (err) {
+                console.error(`Error testing regex for header "${key}":`, err);
+                shouldApply = false;
+              }
+            }
+
+            if (shouldApply) {
+              applicableHeaders[key] = headerConfig.value;
+            } else {
+              console.log(
+                `Not injecting header '${key}' into url '${method}:${url}' due to regex ${headerConfig.regex}`
+              );
+            }
+          });
+
+          // Merge applicable custom headers with existing headers
           const mergedOptions = { ...options };
           mergedOptions.headers = {
-            ...headers,
+            ...applicableHeaders,
             ...(options.headers || {}),
           };
+
           return originalFetch.call(this, url, mergedOptions);
         };
         window.fetch.originalFetch = originalFetch;
@@ -118,24 +170,29 @@ window.addEventListener("__extensionHeadersUpdate", function (event) {
   const list = {};
 
   Object.keys(event.detail).forEach((key) => {
-    if (urlMatches(window.location.href, event.detail[key].urlPattern)) {
-      list[key] = event.detail[key].value;
+    const href = window.location.href;
+    const urlPattern = event.detail[key].urlPattern || "";
+
+    if (urlMatches(href, urlPattern)) {
+      // Convert to new format with value and optional regex
+      list[key] = {
+        value: event.detail[key].value,
+      };
+
+      // If regex is provided, try to convert it
+      if (event.detail[key].regex) {
+        try {
+          list[key].regex = stringToRegex(event.detail[key].regex);
+        } catch (err) {
+          console.error(`Failed to parse regex for header "${key}":`, err);
+          // Continue without the regex
+        }
+      }
+      var k = "test";
     }
   });
 
-  // {
-  //   "X-other": {
-  //     "value": "testplain",
-  //     "urlPattern": "catalog-offers-ext.cp.api.dp.godaddy.com",
-  //     "first": false
-  //   },
-  //   "X-ajax": {
-  //     "value": "value",
-  //     "urlPattern": "example.net",
-  //     "first": false
-  //   }
-  // }
-
+  // Apply the transformed headers
   overrideAjax.setHeaders(list);
   overrideFetch.setHeaders(list);
 
@@ -145,10 +202,7 @@ window.addEventListener("__extensionHeadersUpdate", function (event) {
 // Simple logging for XMLHttpRequest activity
 const observer = new PerformanceObserver((entries) => {
   entries.getEntries().forEach((entry) => {
-    if (
-      entry.initiatorType === "fetch" ||
-      entry.initiatorType === "xmlhttprequest"
-    ) {
+    if (entry.initiatorType === "fetch" || entry.initiatorType === "xmlhttprequest") {
       console.log(`===== Header-enhanced request to: ${entry.name}`);
     }
   });
@@ -160,3 +214,30 @@ try {
 } catch (e) {
   console.log("Performance observer not available");
 }
+
+var stringToRegex = (function () {
+  /**
+   * @param {string} msg
+   * @returns {Error}
+   */
+  function th(msg) {
+    return new Error("stringToRegex error: " + msg);
+  }
+
+  /**
+   * @param {string} v
+   */
+  return (v) => {
+    try {
+      const vv = v.match(/(\\.|[^/])+/g);
+
+      if (!vv || vv.length > 2) {
+        throw new Error(`param '${v}' should split to one or two segments`);
+      }
+
+      return new RegExp(vv[0], vv[1]);
+    } catch (e) {
+      throw th(`general error: string '${v}' error: ${e}`);
+    }
+  };
+})();

@@ -490,21 +490,41 @@
                 <option value="">-- Select from dictionary --</option>
               </select>
             </div>
-            
+
             <div class="form-group header-first-group">
               <label class="checkbox-label">
-                <input type="checkbox" class="header-first-checkbox" checked/> Initial HTML Request
+                <input type="checkbox" class="header-first-checkbox" checked /> Initial HTML Request
                 <span class="tooltip">
                   <span style="font-size: 12px; color: #4285f4; text-decoration: underline">?</span>
-                  <span class="tooltiptext">When checked, this header will be sent also to the first request for html</span>
+                  <span class="tooltiptext"
+                    >When checked, this header will be sent also to the first request for html</span
+                  >
                 </span>
+              </label>
+            </div>
+
+            <div class="form-group header-regex-group" style="display: none">
+              <label for="header-regex-0">
+                URL Regex Filter:
+                <span class="tooltip">
+                  <span style="font-size: 12px; color: #4285f4; text-decoration: underline">?</span>
+                  <span class="tooltiptext"
+                    >If above tickbox is off it means this header will be added only to ajax and fetch requests. but
+                    only when matches this regex</span
+                  >
+                </span>
+                <input
+                  type="text"
+                  id="header-regex-0"
+                  class="header-regex"
+                  placeholder="/^(?!.*\/swagger-config)(?!.*\/v3\/api-docs).*$/"
+                />
               </label>
             </div>
           </div>
         </div>
 
-
-        <span class="tooltip" style="float: right;">
+        <span class="tooltip" style="float: right">
           <button type="button" id="add-header-btn" class="add-header-btn">+</button>
           <span class="tooltiptext">Add another header</span>
         </span>

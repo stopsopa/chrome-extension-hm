@@ -23,6 +23,7 @@ test("no change", (t) => {
       value: "test-value",
       valueSource: "dictionary",
       first: true,
+      regex: null,
     },
   ]);
 });
@@ -56,6 +57,7 @@ test("synchronous passing test", (t) => {
       value: "test-value",
       valueSource: "dictionary",
       first: true,
+      regex: null
     },
   ]);
 
@@ -73,6 +75,8 @@ test("toList no change", (t) => {
         "X-Test-Header": {
           value: "test-value",
           source: "dictionary",
+          first: false,
+          regex: "/abc/i",
         },
       },
     },
@@ -87,6 +91,8 @@ test("toList no change", (t) => {
         "X-Test-Header": {
           value: "test-value",
           source: "dictionary",
+          first: false,
+          regex: "/abc/i",
         },
       },
     },
@@ -104,6 +110,7 @@ test("toList function test", (t) => {
       value: "test-value",
       valueSource: "dictionary",
       first: false,
+      regex: "/abc/i",
     },
   ]);
 
@@ -117,6 +124,7 @@ test("toList function test", (t) => {
           value: "test-value",
           source: "dictionary",
           first: false,
+          regex: "/abc/i",
         },
       },
     },

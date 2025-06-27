@@ -9,7 +9,8 @@
 //     "urlPattern": "xxx.com",
 //     "value": "dev",
 //     "valueSource": "dictionary",
-//     "first": true
+//     "first": false,
+//     "regex": "/abc/i"
 //   },
 //   {
 //     "active": true,
@@ -18,7 +19,7 @@
 //     "urlPattern": "xxx.com",
 //     "value": "ote",
 //     "valueSource": "dictionary",
-//     "first": true
+//     "first": true,
 //   },
 //   ...
 
@@ -34,7 +35,8 @@
 //       "Authorization": {
 //         "value": "dev",
 //         "source": "dictionary",
-//         "first": true
+//         "first": false,
+//         "regex": "/abc/i"
 //       }
 //     }
 //   },
@@ -66,6 +68,7 @@ export function toFlat(list) {
       name: d.name,
       valueSource: d.valueSource,
       first: d.first,
+      regex: d.regex,
     };
 
     if (typeof d.label !== "string") {
@@ -102,6 +105,13 @@ export function toFlat(list) {
           ? d?.headers?.[firstKey]?.first
           : true;
     }
+    
+    if (typeof n.regex !== "string") {
+      n.regex =
+        typeof d?.headers?.[firstKey]?.regex === "string"
+          ? d?.headers?.[firstKey]?.regex
+          : null;
+    }
 
     return n;
   });
@@ -135,6 +145,7 @@ export function toList(list) {
         value: d.value,
         source: d.valueSource,
         first: typeof d.first === "boolean" ? d.first : true,
+        regex: typeof d.regex === "string" ? d.regex : null,
       };
     }
 
