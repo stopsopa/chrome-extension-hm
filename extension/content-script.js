@@ -49,9 +49,55 @@ function createAjaxOverrider() {
   };
 }
 
+function createFetchOverrider() {
+  const th = (msg) => new Error(`createFetchOverrider error: ${msg}`);
+  function isObject(o) {
+    return Object.prototype.toString.call(o) === "[object Object]";
+  }
+  let headers = {};
+  let originalFetch = null;
+  return {
+    override: function () {
+      if (typeof fetch !== "undefined") {
+        if (window.fetch.originalFetch) {
+          throw th("fetch is already overriden");
+        }
+        originalFetch = window.fetch;
+        window.fetch = function (url, options = {}) {
+          // Merge custom headers with existing headers
+          const mergedOptions = { ...options };
+          mergedOptions.headers = {
+            ...headers,
+            ...(options.headers || {}),
+          };
+          return originalFetch.call(this, url, mergedOptions);
+        };
+        window.fetch.originalFetch = originalFetch;
+      }
+    },
+    setHeaders: function (newHeaders) {
+      if (!isObject(newHeaders)) {
+        throw th("Headers must be an object");
+      }
+      headers = newHeaders;
+    },
+    restore: function () {
+      if (window.fetch.originalFetch) {
+        window.fetch = window.fetch.originalFetch;
+        delete window.fetch.originalFetch;
+        originalFetch = null;
+      }
+    },
+  };
+}
+
 window.createAjaxOverrider = createAjaxOverrider;
 window.overrideAjax = createAjaxOverrider();
 overrideAjax.override();
+
+window.createFetchOverrider = createFetchOverrider;
+window.overrideFetch = createFetchOverrider();
+overrideFetch.override();
 
 console.log("content-script.js loaded");
 
@@ -62,12 +108,12 @@ function updateCustomHeaders(newHeaders) {
 
 // Listen for messages from the extension context via custom events
 window.addEventListener("__extensionHeadersUpdate", function (event) {
-  console.log(
-    "__extensionHeadersUpdate details: ",
-    JSON.stringify(event.detail, null, 2),
-    "location",
-    JSON.stringify(window.location, null, 2)
-  );
+  // console.log(
+  //   "__extensionHeadersUpdate details: ",
+  //   JSON.stringify(event.detail, null, 2),
+  //   "location",
+  //   JSON.stringify(window.location, null, 2)
+  // );
 
   const list = {};
 
@@ -91,6 +137,8 @@ window.addEventListener("__extensionHeadersUpdate", function (event) {
   // }
 
   overrideAjax.setHeaders(list);
+  overrideFetch.setHeaders(list);
+
   // console.log("Custom headers updated:", event.detail, "list", list);
 });
 
