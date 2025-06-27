@@ -26,8 +26,13 @@
     {
       "js": ["content-script.js"],
       "matches": ["<all_urls>"],
-      "run_at": "document_idle",
-      "type": "module"
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "js": ["content-script-isolated.js"],
+      "matches": ["<all_urls>"],
+      "run_at": "document_start"
     }
   ],
   
