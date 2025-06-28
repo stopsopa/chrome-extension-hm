@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     only when matches this regex</span>
         </span>
         <input type="text" id="header-regex-${index}" class="header-regex" placeholder="/^(?!.*\/swagger-config)(?!.*\/v3\/api-docs).*$/" value="${
-      regex ? escapeHtml(regex) : ""
+      regex ? escapeHtml(regex) : "/^(?!.*\\/swagger-config)(?!.*\\/v3\/api-docs).*$/"
     }" />
         </label>
       </div>

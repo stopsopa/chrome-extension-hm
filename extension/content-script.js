@@ -85,6 +85,9 @@ function createFetchOverrider() {
         }
         originalFetch = window.fetch;
         window.fetch = function (url, options = {}) {
+
+          const urlString = typeof url === "string" ? url : url.url || "";
+
           // Start with empty custom headers that we'll fill based on regex matching
           const applicableHeaders = {};
 
@@ -99,7 +102,7 @@ function createFetchOverrider() {
             // Check if there's a regex to test against
             if (headerConfig.regex) {
               try {
-                shouldApply = headerConfig.regex.test(`${method}:${url}`);
+                shouldApply = headerConfig.regex.test(`${method}:${urlString}`);
               } catch (err) {
                 console.error(`Error testing regex for header "${key}":`, err);
                 shouldApply = false;
@@ -110,7 +113,7 @@ function createFetchOverrider() {
               applicableHeaders[key] = headerConfig.value;
             } else {
               console.log(
-                `Not injecting header '${key}' into url '${method}:${url}' due to regex ${headerConfig.regex}`
+                `Not injecting header '${key}' into url '${method}:${urlString}' due to regex ${headerConfig.regex}`
               );
             }
           });
@@ -122,12 +125,14 @@ function createFetchOverrider() {
                 ...applicableHeaders,
               },
             });
+            // debugger;
             return originalFetch.call(this, cloned);
           } else {
             options.headers = {
               ...options.headers,
               ...applicableHeaders,
             };
+            // debugger;
             return originalFetch.call(this, url, options);
           }
         };
