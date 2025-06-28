@@ -115,14 +115,21 @@ function createFetchOverrider() {
             }
           });
 
-          // Merge applicable custom headers with existing headers
-          const mergedOptions = { ...options };
-          mergedOptions.headers = {
-            ...applicableHeaders,
-            ...(options.headers || {}),
-          };
-
-          return originalFetch.call(this, url, mergedOptions);
+          if (url instanceof Request) {
+            const cloned = new Request(url, {
+              headers: {
+                ...Object.fromEntries(url.headers.entries()),
+                ...applicableHeaders,
+              },
+            });
+            return originalFetch.call(this, cloned);
+          } else {
+            options.headers = {
+              ...options.headers,
+              ...applicableHeaders,
+            };
+            return originalFetch.call(this, url, options);
+          }
         };
         window.fetch.originalFetch = originalFetch;
       }
@@ -202,7 +209,10 @@ window.addEventListener("__extensionHeadersUpdate", function (event) {
 // Simple logging for XMLHttpRequest activity
 const observer = new PerformanceObserver((entries) => {
   entries.getEntries().forEach((entry) => {
-    if (entry.initiatorType === "fetch" || entry.initiatorType === "xmlhttprequest") {
+    if (
+      entry.initiatorType === "fetch" ||
+      entry.initiatorType === "xmlhttprequest"
+    ) {
       console.log(`===== Header-enhanced request to: ${entry.name}`);
     }
   });
