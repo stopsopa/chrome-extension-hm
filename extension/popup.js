@@ -1443,9 +1443,11 @@ document.addEventListener("DOMContentLoaded", () => {
         el.style.pointerEvents = enabled ? "auto" : "none";
       });
 
+      console.log('popup.js emit setExtensionState event', enabled)
+
       // Notify background script about the state change
       chrome.runtime.sendMessage({
-        action: "setExtensionState",
+        action: "forBackground_enabled",
         enabled: enabled,
       });
     });

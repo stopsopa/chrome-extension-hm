@@ -21,7 +21,7 @@ function createAjaxOverrider() {
     override: function () {
       if (typeof XMLHttpRequest !== "undefined") {
         if (XMLHttpRequest.prototype.originalOpen) {
-          throw th("XMLHttpRequest is already overriden");
+          return;
         }
         originalOpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function (method, url) {
@@ -81,11 +81,10 @@ function createFetchOverrider() {
     override: function () {
       if (typeof fetch !== "undefined") {
         if (window.fetch.originalFetch) {
-          throw th("fetch is already overriden");
+          return;
         }
         originalFetch = window.fetch;
         window.fetch = function (url, options = {}) {
-
           const urlString = typeof url === "string" ? url : url.url || "";
 
           // Start with empty custom headers that we'll fill based on regex matching
@@ -119,22 +118,29 @@ function createFetchOverrider() {
           });
 
           if (url instanceof Request) {
-            const cloned = new Request(url, {
-              headers: {
-                ...Object.fromEntries(url.headers.entries()),
-                ...applicableHeaders,
-              },
-            });
-            // debugger;
-            return originalFetch.call(this, cloned);
-          } else {
-            options.headers = {
-              ...options.headers,
-              ...applicableHeaders,
-            };
-            // debugger;
-            return originalFetch.call(this, url, options);
+            return originalFetch.call(this, url);
+
+            /**
+             * There seems to be a problem with cloning request in some cases.
+             * I will try to determine if swagger uses fetch with regular notation not with Request object
+             *
+             */
+            // const cloned = new Request(url, {
+            //   headers: {
+            //     ...Object.fromEntries(url.headers.entries()),
+            //     ...applicableHeaders,
+            //   },
+            // });
+            // // debugger;
+            // return originalFetch.call(this, cloned);
           }
+
+          options.headers = {
+            ...options.headers,
+            ...applicableHeaders,
+          };
+          // debugger;
+          return originalFetch.call(this, url, options);
         };
         window.fetch.originalFetch = originalFetch;
       }
@@ -157,11 +163,28 @@ function createFetchOverrider() {
 
 window.createAjaxOverrider = createAjaxOverrider;
 window.overrideAjax = createAjaxOverrider();
-overrideAjax.override();
-
 window.createFetchOverrider = createFetchOverrider;
 window.overrideFetch = createFetchOverrider();
-overrideFetch.override();
+
+// --- Extension enabled/disabled toggle support ---
+function setExtensionEnabled(enabled) {
+  if (enabled) {
+    overrideAjax.override();
+    overrideFetch.override();
+  } else {
+    overrideAjax.restore();
+    overrideFetch.restore();
+  }
+}
+
+// Listen for enable/disable via custom event from isolated world
+window.addEventListener("forContentScript_enabled", function (event) {
+  console.log("forContentScript_enabled", event);
+  setExtensionEnabled(event.detail && event.detail.enabled !== false);
+});
+
+// On initial load, check extension state and set overrides accordingly
+setExtensionEnabled(true);
 
 console.log("content-script.js loaded");
 
@@ -172,12 +195,12 @@ function updateCustomHeaders(newHeaders) {
 
 // Listen for messages from the extension context via custom events
 window.addEventListener("__extensionHeadersUpdate", function (event) {
-  // console.log(
-  //   "__extensionHeadersUpdate details: ",
-  //   JSON.stringify(event.detail, null, 2),
-  //   "location",
-  //   JSON.stringify(window.location, null, 2)
-  // );
+  console.log(
+    "__extensionHeadersUpdate details: ",
+    JSON.stringify(event.detail, null, 2),
+    "location",
+    JSON.stringify(window.location, null, 2)
+  );
 
   const list = {};
 
@@ -214,10 +237,7 @@ window.addEventListener("__extensionHeadersUpdate", function (event) {
 // Simple logging for XMLHttpRequest activity
 const observer = new PerformanceObserver((entries) => {
   entries.getEntries().forEach((entry) => {
-    if (
-      entry.initiatorType === "fetch" ||
-      entry.initiatorType === "xmlhttprequest"
-    ) {
+    if (entry.initiatorType === "fetch" || entry.initiatorType === "xmlhttprequest") {
       console.log(`===== Header-enhanced request to: ${entry.name}`);
     }
   });

@@ -18,11 +18,7 @@ function checkExtensionState() {
   chrome.storage.local.get("extensionEnabled", (data) => {
     const enabled = data.extensionEnabled !== false;
 
-    if (!enabled) {
-      // Extension is disabled, make sure all rules are cleared
-      clearAllRules();
-    } else {
-      // Extension is enabled, load and apply rules
+    if (enabled) {
       chrome.storage.local.get("customHeaders", (headerData) => {
         const headers = headerData.customHeaders || [];
         const activeHeaders = headers.filter((h) => h.active !== false);
@@ -30,6 +26,8 @@ function checkExtensionState() {
           updateRules(activeHeaders);
         }
       });
+    } else {
+      clearAllRules();
     }
 
     // Update the extension icon based on the enabled state
@@ -52,14 +50,21 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "setExtensionState") {
+  if (message.action === "forBackground_enabled") {
     const enabled = message.enabled;
+    console.log("forBackground_enabled event", enabled);
 
-    if (!enabled) {
-      // If disabled, clear all rules
-      clearAllRules();
-    } else {
-      // If re-enabled, reload headers and apply rules
+    // Send message to all tabs
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach((tab) => {
+        chrome.tabs.sendMessage(tab.id, {
+          action: "forIsolated_enabled",
+          enabled,
+        });
+      });
+    });
+
+    if (enabled) {
       chrome.storage.local.get("customHeaders", (data) => {
         const headers = data.customHeaders || [];
         const activeHeaders = headers.filter((h) => h.active !== false);
@@ -67,6 +72,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           updateRules(activeHeaders);
         }
       });
+    } else {
+      clearAllRules();
     }
 
     // Update the extension icon based on the new enabled state
@@ -521,10 +528,6 @@ function updateExtensionIcon(enabled) {
 // 2. Convert it to grayscale and reduce opacity to about 50-60%
 // 3. Save it as icon128_disabled.png in the images folder
 
-// Module-level state for MV3 service worker
-let _customHeaderRules = [];
-let _extensionEnabled = true;
-
 // Module-level mapping from label to integer id for DNR rules
 let labelToRuleId = {};
 let nextRuleId = 1;
@@ -534,22 +537,4 @@ function getRuleIdForLabel(label) {
     labelToRuleId[label] = nextRuleId++;
   }
   return labelToRuleId[label];
-}
-
-// Listen for updateRules and setExtensionState messages
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "updateRules") {
-    // Store the latest rules in memory
-    _customHeaderRules = message.headers || [];
-  } else if (message.action === "setExtensionState") {
-    _extensionEnabled = message.enabled !== false;
-  }
-});
-
-// Intercept requests and inject headers
-// (Removed chrome.webRequest.onBeforeSendHeaders.addListener block - use declarativeNetRequest only)
-
-// Helper: wildcard pattern to RegExp
-function wildcardToRegExp(pattern) {
-  return new RegExp("^" + pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*") + "$");
 }
