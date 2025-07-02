@@ -10,11 +10,15 @@ To make things worse, some Swagger instances don’t even load unless you're alr
 
 However, using ModHeader comes with its own inconvenience - you need to remember to turn it on and off when switching between services. Accidentally leaving it enabled can break unrelated pages (e.g., loading images in Jira tickets) by injecting unnecessary headers.
 
+Another problem with enabling/disabling is that if user forget to turn off ModHeader for given page and go to Google or any other page the Auhorization header will be sent there too - os it essentially causes Auth token to leak all over the internet. 
+
 Also when switching between PROD, DEV, TEST you either will have to switch ModHeader profiles or update the header manually each time.
 
 After using ModHeader for a while, I realized this process could be significantly improved-especially in the modern era of vibecoding.
 
 So, I built a simple plugin in basically one evening - and documented it the next.
+
+Well, that is not quite true. Because some parts were not working properly so I had to tweak them manually, and once I've decided to show it to bigger audience I also wanted to make sure it will do it's job without disrupting other things - so few more evenings added to that.
 
 # Disclaimer
 
