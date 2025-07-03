@@ -1615,6 +1615,10 @@ document.addEventListener("DOMContentLoaded", () => {
     setupHeaderFirstCheckboxListeners();
     return result;
   };
+
+  document.getElementById('open-extensions-link').addEventListener('click', () => {
+    chrome.tabs.create({ url: 'chrome://extensions' });
+  });
 });
 
 // Export any functions that might be needed by other modules
