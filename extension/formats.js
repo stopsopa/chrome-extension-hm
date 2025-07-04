@@ -84,9 +84,7 @@ export function toFlat(list) {
     }
 
     if (typeof firstKey !== "string") {
-      throw new Error(
-        "headers object have to have at least one key - object index: " + i
-      );
+      throw new Error("headers object have to have at least one key - object index: " + i);
     }
 
     n.name = firstKey;
@@ -94,23 +92,17 @@ export function toFlat(list) {
     if (typeof n.value !== "string") {
       n.value = d?.headers?.[firstKey]?.value;
     }
-    
+
     if (typeof n.valueSource !== "string") {
       n.valueSource = d?.headers?.[firstKey]?.source;
     }
-    
+
     if (typeof n.first !== "string") {
-      n.first =
-        typeof d?.headers?.[firstKey]?.first === "boolean"
-          ? d?.headers?.[firstKey]?.first
-          : true;
+      n.first = typeof d?.headers?.[firstKey]?.first === "boolean" ? d?.headers?.[firstKey]?.first : true;
     }
-    
+
     if (typeof n.regex !== "string") {
-      n.regex =
-        typeof d?.headers?.[firstKey]?.regex === "string"
-          ? d?.headers?.[firstKey]?.regex
-          : null;
+      n.regex = typeof d?.headers?.[firstKey]?.regex === "string" ? d?.headers?.[firstKey]?.regex : null;
     }
 
     return n;
@@ -136,9 +128,7 @@ export function toList(list) {
       }
 
       if (typeof d.valueSource !== "string") {
-        throw new Error(
-          "toList valueSource must be a string - object index: " + i
-        );
+        throw new Error("toList valueSource must be a string - object index: " + i);
       }
 
       n.headers[d.name] = {

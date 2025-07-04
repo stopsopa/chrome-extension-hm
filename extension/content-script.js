@@ -80,7 +80,7 @@ function createAjaxOverrider() {
               log(
                 `Request Add Headers: Ajax: Not injecting header '${key}' into url '${method}:${url}' due to regex ${
                   headerConfig.regex
-                }, typeof regex: ${typeof headerConfig.regex}`
+                }, typeof regex: ${typeof headerConfig.regex}`,
               );
             }
           });
@@ -167,7 +167,7 @@ function createFetchOverrider() {
               log(
                 `Request Add Headers: Fetch: Not injecting header '${key}' into url '${method}:${urlString}' due to regex ${
                   headerConfig.regex
-                }, typeof regex: ${typeof headerConfig.regex}`
+                }, typeof regex: ${typeof headerConfig.regex}`,
               );
             }
           });
@@ -256,7 +256,7 @@ window.addEventListener("__extensionHeadersUpdate", function (event) {
     "__extensionHeadersUpdate details: ",
     JSON.stringify(event.detail, null, 2),
     "location",
-    JSON.stringify(window.location, null, 2)
+    JSON.stringify(window.location, null, 2),
   );
 
   const list = {};

@@ -57,7 +57,7 @@ test("synchronous passing test", (t) => {
       value: "test-value",
       valueSource: "dictionary",
       first: true,
-      regex: null
+      regex: null,
     },
   ]);
 

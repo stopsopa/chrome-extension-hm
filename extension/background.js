@@ -440,7 +440,6 @@ function updateRules(headers) {
               },
               (result) => {
                 if (chrome.runtime.lastError) {
-                  
                   const errorInfo = {
                     message: chrome.runtime.lastError.message,
                     error: chrome.runtime.lastError,
@@ -501,7 +500,7 @@ function updateRules(headers) {
                     }
                   }
                 }
-              }
+              },
             );
           } catch (err) {
             // Emergency cleanup
@@ -514,7 +513,7 @@ function updateRules(headers) {
             });
           }
         });
-      }
+      },
     );
   });
 }
