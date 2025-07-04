@@ -416,6 +416,16 @@
         background-color: #4285f4;
         color: white;
       }
+      
+      #from_raw {
+        opacity: 0;
+        height: 1em;
+        padding: 8px 12px;
+      }
+      
+      #from_raw:focus {
+        opacity: 1;
+      }
     </style>
   </head>
   <body>
@@ -607,7 +617,10 @@
           <input type="text" id="dict-value" placeholder="value-for-dev-environment" required />
         </div>
 
-        <button type="submit">Add Dictionary Entry</button>
+        <div style="display: flex; gap: 10px; align-items: center">
+          <button type="submit">Add Dictionary Entry</button>
+          <textarea id="from_raw"></textarea>
+        </div>
       </form>
 
       <div class="dictionary-list" id="dictionary-list">

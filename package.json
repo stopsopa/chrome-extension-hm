@@ -1,7 +1,11 @@
 {
   "type": "module",
   "scripts": {
-    "test": "node --test",
+    "test": "node node_modules/.bin/c8 --reporter=html node --test",
     "test:watch": "node --test --watch"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "c8": "^10.1.3"
   }
 }
