@@ -7,7 +7,7 @@ function log(...args) {
     window.dispatchEvent(
       new CustomEvent("log_content-script-isolated-js", {
         detail: args,
-      })
+      }),
     );
   }
 }
@@ -37,7 +37,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     window.dispatchEvent(
       new CustomEvent("__extensionHeadersUpdate", {
         detail: filteredHeaders,
-      })
+      }),
     );
 
     sendResponse({ status: "Headers updated in main world", count: Object.keys(filteredHeaders).length });
@@ -50,7 +50,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         detail: {
           enabled: message.enabled,
         },
-      })
+      }),
     );
     log("Dispatched forContentScript_enabled event to main world");
   }
@@ -63,7 +63,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         detail: {
           enabled: message.enabled,
         },
-      })
+      }),
     );
     log("Dispatched extensionEnabledState event to main world");
   }

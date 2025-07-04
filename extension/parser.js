@@ -31,7 +31,8 @@ export default function parser(str) {
 
       return false;
     })
-    .filter(Boolean).reduce((acc, [key, value]) => {
+    .filter(Boolean)
+    .reduce((acc, [key, value]) => {
       acc[key] = value;
       return acc;
     }, {});
