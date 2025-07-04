@@ -1,2 +1,4 @@
 /extension/_metadata/
 *.zip
+/coverage/
+/node_modules/
