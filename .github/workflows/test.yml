@@ -30,6 +30,8 @@ jobs:
       #   with:
       #     node-version: 22
       #     cache: 'npm'
+      - name: Yarn
+        run: yarn
 
       - name: Run tests
         run: npm test
