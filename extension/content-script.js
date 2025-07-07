@@ -146,28 +146,29 @@ function createFetchOverrider() {
           const method = options?.method || "GET";
 
           // Check each header against URL to see if it should be applied
-          Object.keys(headers).forEach((key) => {
-            const headerConfig = headers[key];
+          Object.keys(headers).forEach((header) => {
+            const { regex, value } = headers[header];
+
             let shouldApply = true;
 
             // Check if there's a regex to test against
-            if (headerConfig.regex) {
+            if (regex) {
               try {
-                shouldApply = headerConfig.regex.test(`${method}:${urlString}`);
+                shouldApply = regex.test(`${method}:${urlString}`);
               } catch (err) {
-                console.error(`Error testing regex for header "${key}":`, err);
+                console.error(`Error testing regex for header "${header}":`, err);
                 shouldApply = false;
               }
             }
 
             if (shouldApply) {
-              console.log(`Request Add Headers: Fetch: Injecting header '${key}' into url '${method}:${urlString}'`);
-              applicableHeaders[key] = headerConfig.value;
+              console.log(`Request Add Headers: Fetch: Injecting header '${header}' into url '${method}:${urlString}'`);
+              applicableHeaders[header] = value;
             } else {
               log(
-                `Request Add Headers: Fetch: Not injecting header '${key}' into url '${method}:${urlString}' due to regex ${
-                  headerConfig.regex
-                }, typeof regex: ${typeof headerConfig.regex}`,
+                `Request Add Headers: Fetch: Not injecting header '${header}' into url '${method}:${urlString}' due to regex ${
+                  regex
+                }, typeof regex: ${typeof regex}`,
               );
             }
           });
@@ -261,25 +262,21 @@ window.addEventListener("__extensionHeadersUpdate", function (event) {
 
   const list = {};
 
-  Object.keys(event.detail).forEach((key) => {
-    const href = window.location.href;
-    const urlPattern = event.detail[key].urlPattern || "";
+  Object.keys(event.detail).forEach((header) => {
+    const { value, regex } = event.detail[header];
 
-    if (urlMatches(href, urlPattern)) {
-      list[key] = {
-        value: event.detail[key].value,
-      };
+    list[header] = {
+      value,
+    };
 
-      // If regex is provided, try to convert it
-      if (event.detail[key].regex) {
-        try {
-          list[key].regex = stringToRegex(event.detail[key].regex);
-        } catch (err) {
-          console.error(`Failed to parse regex for header "${key}":`, err);
-          // Continue without the regex
-        }
+    // If regex is provided, try to convert it
+    if (regex) {
+      try {
+        list[header].regex = stringToRegex(regex);
+      } catch (err) {
+        console.error(`Failed to parse regex for header "${header}":`, err);
+        // Continue without the regex
       }
-      var k = "test";
     }
   });
 

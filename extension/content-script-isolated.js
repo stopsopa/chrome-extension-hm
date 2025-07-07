@@ -15,6 +15,12 @@ function log(...args) {
 // Log when the isolated script loads
 log("start loading");
 
+// Simplified matching version for urlFilter
+// https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest#url_filter_syntax
+function urlMatches(url, pattern) {
+  return url.toLowerCase().includes(pattern.toLowerCase());
+}
+
 // Setup a listener for header updates from the background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Log all received messages
@@ -24,11 +30,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Send only headers with first: false to the main world content script
     const filteredHeaders = {};
 
-    Object.keys(message.headers).forEach((headerName) => {
-      const headerConfig = message.headers[headerName];
+    (message.headers || []).forEach(({ value, urlPattern, first, headerName, regex }) => {
       // Only pass headers with first: false
-      if (headerConfig.first === false) {
-        filteredHeaders[headerName] = headerConfig;
+      if (first === false && urlMatches(location.href, urlPattern)) {
+        filteredHeaders[headerName] = {
+          value,
+          regex,
+        };
       }
     });
 
