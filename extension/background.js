@@ -145,7 +145,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return processedHeader;
       });
 
-      const ajaxHeadersMap = {};
+      const ajaxHeadersMap = [];
 
       // Prepare headers for the Ajax overrider - ONLY for headers with first: false
       processedHeaders.forEach((header) => {
@@ -154,13 +154,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           for (const [headerName, value] of Object.entries(header.resolvedHeaders)) {
             // Include ONLY headers with first: false for Ajax overriding
             const headerConfig = header.headers[headerName];
+
             if (headerConfig.first === false) {
-              ajaxHeadersMap[headerName] = {
+              ajaxHeadersMap.push({
                 value: value,
                 urlPattern: header.urlPattern, // Include URL pattern for matching
                 first: false,
+                headerName,
                 regex: headerConfig.regex,
-              };
+              });
             }
           }
         }
@@ -440,7 +442,6 @@ function updateRules(headers) {
               },
               (result) => {
                 if (chrome.runtime.lastError) {
-                  
                   const errorInfo = {
                     message: chrome.runtime.lastError.message,
                     error: chrome.runtime.lastError,
@@ -501,7 +502,7 @@ function updateRules(headers) {
                     }
                   }
                 }
-              }
+              },
             );
           } catch (err) {
             // Emergency cleanup
@@ -514,7 +515,7 @@ function updateRules(headers) {
             });
           }
         });
-      }
+      },
     );
   });
 }

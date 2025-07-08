@@ -1,26 +1,23 @@
 {
-  "version": "1.5",
+  "version": "1.7",
   "manifest_version": 3,
   "name": "Request Add Headers",
   "description": "Adds custom headers to all outgoing requests",
-  
-  "permissions": [
-    "declarativeNetRequest",
-    "storage"
-  ],
-  
-  "host_permissions": [
-    "<all_urls>"
-  ],
-  
+
+  "permissions": ["declarativeNetRequest", "storage"],
+
+  "host_permissions": ["<all_urls>"],
+
   "declarative_net_request": {
-    "rule_resources": [{
-      "id": "ruleset_1",
-      "enabled": true,
-      "path": "rules.json"
-    }]
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
   },
-  
+
   "content_scripts": [
     {
       "js": ["content-script.js"],
@@ -34,18 +31,18 @@
       "run_at": "document_start"
     }
   ],
-  
+
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
-  
+
   "action": {
     "default_popup": "popup.html",
     "default_icon": "images/icon128.png",
     "default_title": "Request Header Modifier"
   },
-  
+
   "icons": {
     "128": "images/icon128.png"
   }

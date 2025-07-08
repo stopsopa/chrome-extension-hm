@@ -1,5 +1,22 @@
 // popup.js - Handles the popup UI and user interactions
 
+import parser from "./parser.js";
+
+const DictionaryId = (function () {
+  let id = 0;
+
+  return {
+    get: function () {
+      id += 1;
+
+      return `dicid-${id}`;
+    },
+    reset: function () {
+      id = 0;
+    },
+  };
+})();
+
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize filter variables globally at the top
   let filterValue = "";
@@ -57,7 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const headerEntry = document.createElement("div");
     headerEntry.className = "header-entry";
     headerEntry.dataset.index = index;
-    
 
     headerEntry.innerHTML = `
       <button type="button" class="remove-header-btn" title="Remove this header">&#9851;&#65039;</button>
@@ -65,36 +81,36 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="form-group">
         <label for="header-name-${index}">Header Name:</label>
         <input type="text" id="header-name-${index}" class="header-name" placeholder="X-Custom-Header" required value="${escapeHtml(
-      headerName
-    )}" />
+          headerName,
+        )}" />
       </div>
 
       <div class="form-group value-source-group">
         <label style="display: inline-block; margin-right: 10px">Value Source:</label>
         <label class="radio-label">
           <input type="radio" name="value-source-${index}" value="manual" class="value-source" ${
-      valueSource === "manual" ? "checked" : ""
-    } /> Manual
+            valueSource === "manual" ? "checked" : ""
+          } /> Manual
         </label>
         <label class="radio-label">
           <input type="radio" name="value-source-${index}" value="dictionary" class="value-source" ${
-      valueSource === "dictionary" ? "checked" : ""
-    } /> Dictionary
+            valueSource === "dictionary" ? "checked" : ""
+          } /> Dictionary
         </label>
       </div>
 
       <div class="form-group value-source-manual" ${valueSource === "dictionary" ? 'style="display: none"' : ""}>
         <label for="header-value-${index}">Header Value:</label>
         <input type="text" id="header-value-${index}" class="header-value" placeholder="CustomValue" ${
-      valueSource === "manual" ? "required" : ""
-    } value="${valueSource === "manual" ? escapeHtml(headerValue) : ""}" />
+          valueSource === "manual" ? "required" : ""
+        } value="${valueSource === "manual" ? escapeHtml(headerValue) : ""}" />
       </div>
 
       <div class="form-group value-source-dictionary" ${valueSource === "manual" ? 'style="display: none"' : ""}>
         <label for="header-value-key-${index}">Select Value:</label>
         <select id="header-value-key-${index}" class="header-value-key" ${
-      valueSource === "dictionary" ? "required" : ""
-    }>
+          valueSource === "dictionary" ? "required" : ""
+        }>
           <option value="">-- Select from dictionary --</option>
         </select>
       </div>
@@ -118,8 +134,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     only when matches this regex</span>
         </span>
         <input type="text" id="header-regex-${index}" class="header-regex" placeholder="/^(?!.*\/swagger-config)(?!.*\\/v3\\/api-docs).*$/" value="${
-      regex ? escapeHtml(regex) : "/^(?!.*\\/swagger-config)(?!.*\\/v3\\/api-docs).*$/"
-    }" />
+          regex ? escapeHtml(regex) : "/^(?!.*\\/swagger-config)(?!.*\\/v3\\/api-docs).*$/"
+        }" />
         </label>
       </div>
     `;
@@ -748,7 +764,7 @@ document.addEventListener("DOMContentLoaded", () => {
         note.style.borderRadius = "6px";
         note.style.fontSize = "15px";
         note.innerHTML = `Nothing found when filtering with <b>${criteriaLabel}</b> including <b>${escapeHtml(
-          filterValue
+          filterValue,
         )}</b>.`;
         headerList.appendChild(note);
         return;
@@ -835,7 +851,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="header-detail">
         <b>Pattern:</b> 
         <input type="text" class="url-pattern-input" value="${escapeHtml(
-          header.urlPattern
+          header.urlPattern,
         )}" readonly title="Click to select for copying">
       </div>
       ${headersListHtml}
@@ -1142,7 +1158,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!h.headers) return false;
 
         return Object.values(h.headers).some(
-          (headerConfig) => headerConfig.source === "dictionary" && headerConfig.value === oldKey
+          (headerConfig) => headerConfig.source === "dictionary" && headerConfig.value === oldKey,
         );
       });
 
@@ -1194,14 +1210,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!h.headers) return false;
 
         return Object.values(h.headers).some(
-          (headerConfig) => headerConfig.source === "dictionary" && headerConfig.value === entryToDelete.key
+          (headerConfig) => headerConfig.source === "dictionary" && headerConfig.value === entryToDelete.key,
         );
       });
 
       if (headersUsingEntry.length > 0) {
         if (
           !confirm(
-            `This dictionary entry is used by ${headersUsingEntry.length} rule(s). Deleting it may break those rules. Continue?`
+            `This dictionary entry is used by ${headersUsingEntry.length} rule(s). Deleting it may break those rules. Continue?`,
           )
         ) {
           return; // User cancelled
@@ -1443,7 +1459,7 @@ document.addEventListener("DOMContentLoaded", () => {
         el.style.pointerEvents = enabled ? "auto" : "none";
       });
 
-      console.log('popup.js emit setExtensionState event', enabled)
+      console.log("popup.js emit setExtensionState event", enabled);
 
       // Notify background script about the state change
       chrome.runtime.sendMessage({
@@ -1553,6 +1569,107 @@ document.addEventListener("DOMContentLoaded", () => {
     reader.readAsText(file);
   });
 
+  const fromRawTextarea = document.getElementById("from_raw");
+  if (fromRawTextarea) {
+    fromRawTextarea.addEventListener("paste", function (e) {
+      setTimeout(() => {
+        const rawText = this.value.trim();
+        document.querySelector("#from_raw").value = "";
+        if (rawText) {
+          const parsed = parser(rawText);
+          if (Object.keys(parsed).length > 0) {
+            updateDictionary(parsed);
+          } else {
+            showNotification(`No key values found`);
+          }
+        }
+      }, 100);
+    });
+  }
+
+  // Update dictionary with parsed entries
+  function updateDictionary(entries) {
+    DictionaryId.reset();
+
+    chrome.storage.local.get("dictionary", (data) => {
+      const dictionary = data.dictionary || [];
+
+      const tmp = {};
+
+      dictionary.forEach(({ key, value }) => {
+        tmp[key] = {
+          id: DictionaryId.get(),
+          value,
+        };
+      });
+
+      for (const [key, value] of Object.entries(entries)) {
+        if (tmp[key]) {
+          tmp[key].value = value;
+        } else {
+          tmp[key] = {
+            id: DictionaryId.get(),
+            value,
+          };
+        }
+      }
+      let newList = [];
+      for (const [key, { value, id }] of Object.entries(tmp)) {
+        newList.push({
+          id,
+          key,
+          value,
+        });
+      }
+
+      // Save to storage
+      chrome.storage.local.set({ dictionary: newList }, () => {
+        // Clear the list and refresh all entries
+        dictionaryList.innerHTML = "";
+
+        setTimeout(() => {
+          // Display all entries
+          newList.forEach(displayDictionaryEntry);
+          // Update the dropdown options
+          updateDictionaryDropdown();
+        }, 1000);
+      });
+
+      const keys = Object.keys(entries);
+      let message;
+      if (keys.length > 0) {
+        message = `Dictionary: keys ${keys.join(", ")} updated`;
+      } else {
+        message = `Dictionary: no keys updated`;
+      }
+      showNotification(message);
+    });
+  }
+
+  // Simple notification function
+  function showNotification(message) {
+    const notification = document.createElement("div");
+    notification.textContent = message;
+    notification.style.position = "fixed";
+    notification.style.bottom = "20px";
+    notification.style.left = "50%";
+    notification.style.transform = "translateX(-50%)";
+    notification.style.backgroundColor = "#4285f4";
+    notification.style.color = "white";
+    notification.style.padding = "10px 15px";
+    notification.style.borderRadius = "4px";
+    notification.style.zIndex = "1000";
+
+    document.body.appendChild(notification);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+      notification.style.opacity = "0";
+      notification.style.transition = "opacity 0.5s";
+      setTimeout(() => notification.remove(), 500);
+    }, 3000);
+  }
+
   // Function to select all text in an input field when clicked
   function selectAllOnClick(event) {
     event.target.select();
@@ -1571,29 +1688,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Function to handle header first checkbox changes
   function setupHeaderFirstCheckboxListeners() {
-    document.querySelectorAll('.header-first-checkbox').forEach(checkbox => {
+    document.querySelectorAll(".header-first-checkbox").forEach((checkbox) => {
       // Remove existing listeners to prevent duplicates
-      checkbox.removeEventListener('change', headerFirstCheckboxHandler);
+      checkbox.removeEventListener("change", headerFirstCheckboxHandler);
       // Add fresh listener
-      checkbox.addEventListener('change', headerFirstCheckboxHandler);
-      
+      checkbox.addEventListener("change", headerFirstCheckboxHandler);
+
       // Initialize display state based on current checkbox state
-      const regexGroup = checkbox.closest('.form-group').nextElementSibling;
+      const regexGroup = checkbox.closest(".form-group").nextElementSibling;
       if (checkbox.checked) {
-        regexGroup.style.display = 'none';
+        regexGroup.style.display = "none";
       } else {
-        regexGroup.style.display = 'block';
+        regexGroup.style.display = "block";
       }
     });
   }
 
   // Handler function for the header first checkbox
   function headerFirstCheckboxHandler() {
-    const regexGroup = this.closest('.form-group').nextElementSibling;
+    const regexGroup = this.closest(".form-group").nextElementSibling;
     if (this.checked) {
-      regexGroup.style.display = 'none';
+      regexGroup.style.display = "none";
     } else {
-      regexGroup.style.display = 'block';
+      regexGroup.style.display = "block";
     }
   }
 
@@ -1602,7 +1719,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Modify addHeaderEntry to call setupHeaderFirstCheckboxListeners after adding a new entry
   const originalAddHeaderEntry = addHeaderEntry;
-  addHeaderEntry = function(...args) {
+  addHeaderEntry = function (...args) {
     const result = originalAddHeaderEntry.apply(this, args);
     setupHeaderFirstCheckboxListeners();
     return result;
@@ -1610,14 +1727,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Also ensure the listeners are set up after loading existing headers
   const originalLoadHeaders = loadHeaders;
-  loadHeaders = function(...args) {
+  loadHeaders = function (...args) {
     const result = originalLoadHeaders.apply(this, args);
     setupHeaderFirstCheckboxListeners();
     return result;
   };
 
-  document.getElementById('open-extensions-link').addEventListener('click', () => {
-    chrome.tabs.create({ url: 'chrome://extensions' });
+  document.getElementById("open-extensions-link").addEventListener("click", () => {
+    chrome.tabs.create({ url: "chrome://extensions" });
   });
 });
 

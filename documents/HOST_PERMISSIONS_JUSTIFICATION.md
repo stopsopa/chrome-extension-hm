@@ -6,9 +6,10 @@ The Header Modifier extension's core functionality is to modify HTTP request hea
 
 ### 1. Core Functionality Requirements
 
-My extension's single purpose is to automatically modify HTTP headers for outgoing web requests. This is accomplished through Chrome's declarativeNetRequest API which requires host permissions for the sites where header modifications should occur. 
+My extension's single purpose is to automatically modify HTTP headers for outgoing web requests. This is accomplished through Chrome's declarativeNetRequest API which requires host permissions for the sites where header modifications should occur.
 
 The extension allows users to:
+
 - Create custom headers that apply to all websites
 - Create custom headers that apply to specific websites via URL pattern matching
 - Enable/disable header modifications without having to interact with the extension for each tab
