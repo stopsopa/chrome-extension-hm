@@ -3,6 +3,8 @@
 // Global variables to store headers and original XMLHttpRequest
 let customHeaders = {};
 let originalXMLHttpRequestOpen = null;
+let extensionIsEnabled = false;
+let hasAjaxFetchHeaders = false;
 
 let loggingEnabled = true;
 loggingEnabled = false;
@@ -205,15 +207,21 @@ window.createFetchOverrider = createFetchOverrider;
 window.overrideFetch = createFetchOverrider();
 
 // --- Extension enabled/disabled toggle support ---
-function setExtensionEnabled(enabled) {
-  log("setExtensionEnabled received");
-  if (enabled) {
+function applyOverridesState() {
+  const shouldEnable = extensionIsEnabled && hasAjaxFetchHeaders;
+  if (shouldEnable) {
     overrideAjax.override();
     overrideFetch.override();
   } else {
     overrideAjax.restore();
     overrideFetch.restore();
   }
+}
+
+function setExtensionEnabled(enabled) {
+  log("setExtensionEnabled received");
+  extensionIsEnabled = !!enabled;
+  applyOverridesState();
 }
 
 // Listen for enable/disable via custom event from isolated world
@@ -283,6 +291,10 @@ window.addEventListener("__extensionHeadersUpdate", function (event) {
   // Apply the transformed headers
   overrideAjax.setHeaders(list);
   overrideFetch.setHeaders(list);
+
+  // Enable overrides only if at least one header is defined for this page
+  hasAjaxFetchHeaders = Object.keys(list).length > 0;
+  applyOverridesState();
 
   // log("Custom headers updated:", event.detail, "list", list);
 });
